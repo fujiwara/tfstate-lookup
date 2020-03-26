@@ -37,7 +37,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	res, err := s.Lookup(os.Args[1])
+	res, err := s.Lookup(flag.Arg(0))
 	if err != nil {
 		panic(err)
 	}
