@@ -48,8 +48,14 @@ func (s *TFState) Lookup(key string) (interface{}, error) {
 func lookupAttrs(file *statefile.File, key string) ([]byte, string, error) {
 	name := key
 	var module *states.Module
-	if strings.HasPrefix(name, "module.") {
-		nameParts := strings.Split(name, ".")
+	nameParts := strings.Split(name, ".")
+	if len(nameParts) < 2 ||
+		nameParts[0] == "module" && len(nameParts) < 4 ||
+		nameParts[0] == "data" && len(nameParts) < 3 {
+		return nil, "", errors.New("invalid key")
+	}
+
+	if nameParts[0] == "module" {
 		mi, ds := addrs.ParseModuleInstanceStr(strings.Join(nameParts[0:2], "."))
 		if err := ds.Err(); err != nil {
 			return nil, "", err
@@ -58,15 +64,14 @@ func lookupAttrs(file *statefile.File, key string) ([]byte, string, error) {
 		if module == nil {
 			return nil, "", fmt.Errorf("module %s is not found", mi)
 		}
-		name = strings.TrimPrefix(name, module.Addr.String()+".")
+		nameParts = nameParts[2:] // remove module prefix
 	} else {
 		module = file.State.Module(nil)
 	}
 	log.Println("[debug] module", module.Addr.String())
-	log.Println("[debug] name", name)
+	log.Println("[debug] name", nameParts)
 
 	var query string
-	nameParts := strings.Split(name, ".")
 	if nameParts[0] == "data" {
 		name = strings.Join(nameParts[0:3], ".")
 		query = "." + strings.Join(nameParts[3:], ".")
