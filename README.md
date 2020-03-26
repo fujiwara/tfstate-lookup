@@ -20,13 +20,13 @@ Usage of tfstate-lookup:
 ```
 
 ```console
-$ tfstate-lookup -s path/to/terraform.tfstate aws_vpc.main.id
+$ tfstate-lookup aws_vpc.main.id
 "vpc-1a2b3c4d"
 
-$ tfstate-lookup -r -s path/to/terraform.tfstate aws_vpc.main.id
+$ tfstate-lookup -r aws_vpc.main.id
 vpc-1a2b3c4d
 
-$ tfstate-lookup -s path/to/terraform.tfstate aws_vpc.main
+$ tfstate-lookup aws_vpc.main
 {
   "arn": "arn:aws:ec2:ap-northeast-1:123456789012:vpc/vpc-1a2b3c4d",
   "assign_generated_ipv6_cidr_block": false,
