@@ -4,7 +4,26 @@ Lookup resource attributes in tfstate.
 
 ## Usage (Go package)
 
-See [godoc](https://godoc.org/github.com/fujiwara/tfstate-lookup/tfstate).
+See details in [godoc](https://godoc.org/github.com/fujiwara/tfstate-lookup/tfstate).
+
+```go
+package main
+
+import(
+    "fmt"
+    "os"
+
+    "github.com/fujiwara/tfstate-lookup/tfstate"
+)
+
+func main() {
+	f, _ := os.Open("terraform.tfstate")
+    state, _ := tfstate.Read(f)
+    res, _ := state.Lookup("aws_vpc.main.id")
+    vpcID := res.(string)
+    fmt.Println(vpcID)
+}
+```
 
 ## Usage (command)
 
