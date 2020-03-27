@@ -19,7 +19,7 @@ func init() {
 	testing.Init()
 	level := os.Getenv("LOG_LEVEL")
 	if level == "" {
-		level = "warn"
+		level = "debug"
 	}
 	filter := &logutils.LevelFilter{
 		Levels:   []logutils.LogLevel{"debug", "warn", "error"},
@@ -54,6 +54,10 @@ var TestSuitesOK = []TestSuite{
 	TestSuite{
 		Key:    `module.logs.aws_cloudwatch_log_group.main["app"].retention_in_days`,
 		Result: float64(30),
+	},
+	TestSuite{
+		Key:    `aws_iam_role_policy_attachment.ec2[1].id`,
+		Result: "ec2-20190801065413531100000001",
 	},
 }
 
