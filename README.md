@@ -28,9 +28,6 @@ func main() {
 
 ```
 Usage of tfstate-lookup:
-  -r	raw output
-  -raw
-    	raw output
   -s string
     	tfstate file path (default "terraform.tfstate")
   -state string
@@ -39,9 +36,6 @@ Usage of tfstate-lookup:
 
 ```console
 $ tfstate-lookup aws_vpc.main.id
-"vpc-1a2b3c4d"
-
-$ tfstate-lookup -r aws_vpc.main.id
 vpc-1a2b3c4d
 
 $ tfstate-lookup aws_vpc.main
