@@ -75,6 +75,10 @@ var TestSuitesOK = []TestSuite{
 		Result: nil,
 	},
 	TestSuite{
+		Key:    `module.logs.aws_cloudwatch_log_group.main`,
+		Result: nil,
+	},
+	TestSuite{
 		Key:    `aws_iam_role_policy_attachment.ec2[1].id`,
 		Result: "ec2-20190801065413531100000001",
 	},

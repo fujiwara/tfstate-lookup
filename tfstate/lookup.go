@@ -106,7 +106,7 @@ func parseAddress(key string) (string, string, error) {
 			))
 		} else {
 			resq = append(resq, fmt.Sprintf(
-				`select(.mode == "managed" and .type == "%s" and .name == "%s").instances[0].attributes`,
+				`select(.mode == "managed" and .type == "%s" and .name == "%s" and .each == null).instances[0].attributes`,
 				parts[0], parts[1],
 			))
 		}
