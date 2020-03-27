@@ -4,20 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"strings"
 
 	"github.com/itchyny/gojq"
 	"github.com/pkg/errors"
 )
 
-// Attribute represents tfstate resource attributes
-type Attribute struct {
+type Object struct {
 	Value interface{}
 }
 
-func (a Attribute) String() string {
+func (a Object) String() string {
 	switch v := a.Value; v.(type) {
 	case string, float64:
 		return fmt.Sprint(v)
@@ -27,7 +24,8 @@ func (a Attribute) String() string {
 	}
 }
 
-func (a *Attribute) Query(query string) (*Attribute, error) {
+// Query queries object by go-jq
+func (a *Object) Query(query string) (*Object, error) {
 	jq, err := gojq.Parse(query)
 	if err != nil {
 		return nil, err
@@ -41,9 +39,9 @@ func (a *Attribute) Query(query string) (*Attribute, error) {
 		if err, ok := v.(error); ok {
 			return nil, err
 		}
-		return &Attribute{Value: v}, nil
+		return &Object{v}, nil
 	}
-	return nil, fmt.Errorf("%s is not found in attributes", query)
+	return &Object{}, nil // not found
 }
 
 // TFState represents a tfstate
@@ -54,76 +52,65 @@ type TFState struct {
 // Read reads a tfstate from io.Reader
 func Read(src io.Reader) (*TFState, error) {
 	var err error
-	s := &TFState{}
-	b, err := ioutil.ReadAll(src)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(b, &s.state); err != nil {
+	var s TFState
+	if err := json.NewDecoder(src).Decode(&s.state); err != nil {
 		return nil, errors.Wrap(err, "invalid json")
 	}
-	return s, err
+	return &s, err
 }
 
 // Lookup lookups attributes of the specified key in tfstate
-func (s *TFState) Lookup(key string) (*Attribute, error) {
-	attr, query, err := s.lookupAttr(key)
+func (s *TFState) Lookup(key string) (*Object, error) {
+	resQuery, attrQuery, err := parseAddress(key)
 	if err != nil {
 		return nil, err
 	}
-	return attr.Query(query)
+
+	attr, err := (&Object{s.state}).Query(resQuery)
+	if err != nil {
+		return nil, err
+	}
+	return attr.Query(attrQuery)
 }
 
-func (s *TFState) lookupAttr(key string) (*Attribute, string, error) {
-	name := key
-	nameParts := strings.Split(name, ".")
-	if len(nameParts) < 2 ||
-		nameParts[0] == "module" && len(nameParts) < 4 ||
-		nameParts[0] == "data" && len(nameParts) < 3 {
-		return nil, "", fmt.Errorf("invalid address: %s", key)
+func parseAddress(key string) (string, string, error) {
+	parts := strings.Split(key, ".")
+	if len(parts) < 2 ||
+		parts[0] == "module" && len(parts) < 4 ||
+		parts[0] == "data" && len(parts) < 3 {
+		return "", "", fmt.Errorf("invalid address: %s", key)
 	}
 
 	resq := []string{".resources[]"}
 	var query string
-	if nameParts[0] == "module" {
-		resq = append(resq, fmt.Sprintf(`select(.module == "module.%s")`, nameParts[1]))
-		nameParts = nameParts[2:] // remove module prefix
+	if parts[0] == "module" {
+		resq = append(resq, fmt.Sprintf(`select(.module == "module.%s")`, parts[1]))
+		parts = parts[2:] // remove module prefix
 	}
 
-	if nameParts[0] == "data" {
+	if parts[0] == "data" {
 		resq = append(resq, fmt.Sprintf(
-			`select(.mode == "%s" and .type == "%s" and .name == "%s").instances[0].attributes`,
-			nameParts[0], nameParts[1], nameParts[2],
+			`select(.mode == "data" and .type == "%s" and .name == "%s").instances[0].attributes`,
+			parts[1], parts[2],
 		))
-		query = "." + strings.Join(nameParts[3:], ".")
+		query = "." + strings.Join(parts[3:], ".")
 	} else {
-		n := nameParts[1]
+		n := parts[1] // foo["bar"], foo[0]
+
 		if i := strings.Index(n, "["); i != -1 { // each
-			name := n[0:i]
-			indexKey := n[i+1 : len(n)-1]
+			indexKey := n[i+1 : len(n)-1] // "bar", 0
+			name := n[0:i]                // foo
 			resq = append(resq, fmt.Sprintf(
 				`select(.mode == "managed" and .type == "%s" and .name == "%s").instances[] | select(.index_key == %s).attributes`,
-				nameParts[0], name, indexKey,
+				parts[0], name, indexKey,
 			))
 		} else {
 			resq = append(resq, fmt.Sprintf(
 				`select(.mode == "managed" and .type == "%s" and .name == "%s").instances[0].attributes`,
-				nameParts[0], nameParts[1],
+				parts[0], parts[1],
 			))
 		}
-		query = "." + strings.Join(nameParts[2:], ".")
+		query = "." + strings.Join(parts[2:], ".")
 	}
-	resoureQuery := strings.Join(resq, " | ")
-	log.Println("[debug] resource query", resoureQuery)
-	log.Println("[debug] attribute query", query)
-
-	state := &Attribute{Value: s.state}
-	attr, err := state.Query(resoureQuery)
-	if err != nil {
-		return nil, query, errors.Wrapf(err, "invalid resource address: %s", key)
-	}
-	if attr.Value == nil {
-		return nil, query, errors.Wrapf(err, "resource not found in state: %s", key)
-	}
-	return attr, query, nil
+	return strings.Join(resq, " | "), query, nil
 }
