@@ -19,9 +19,8 @@ import(
 func main() {
     f, _ := os.Open("terraform.tfstate")
     state, _ := tfstate.Read(f)
-    res, _ := state.Lookup("aws_vpc.main.id")
-    vpcID := res.(string)
-    fmt.Println(vpcID)
+    attrs, _ := state.Lookup("aws_vpc.main.id")
+    fmt.Println(attrs.String())
 }
 ```
 
