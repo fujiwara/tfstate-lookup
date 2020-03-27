@@ -4,22 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform/addrs"
-	"github.com/hashicorp/terraform/states"
-	"github.com/hashicorp/terraform/states/statefile"
 	"github.com/itchyny/gojq"
 	"github.com/pkg/errors"
 )
 
-// Attribute represents tfstate resource attributes
-type Attribute struct {
+type Object struct {
 	Value interface{}
 }
 
-func (a Attribute) String() string {
+func (a Object) String() string {
 	switch v := a.Value; v.(type) {
 	case string, float64:
 		return fmt.Sprint(v)
@@ -29,7 +24,8 @@ func (a Attribute) String() string {
 	}
 }
 
-func (a *Attribute) Query(query string) (*Attribute, error) {
+// Query queries object by go-jq
+func (a *Object) Query(query string) (*Object, error) {
 	jq, err := gojq.Parse(query)
 	if err != nil {
 		return nil, err
@@ -43,101 +39,78 @@ func (a *Attribute) Query(query string) (*Attribute, error) {
 		if err, ok := v.(error); ok {
 			return nil, err
 		}
-		return &Attribute{Value: v}, nil
+		return &Object{v}, nil
 	}
-	return nil, fmt.Errorf("%s is not found in attributes", query)
+	return &Object{}, nil // not found
 }
 
 // TFState represents a tfstate
 type TFState struct {
-	statefile *statefile.File
+	state interface{}
 }
 
 // Read reads a tfstate from io.Reader
 func Read(src io.Reader) (*TFState, error) {
 	var err error
-	s := &TFState{}
-	s.statefile, err = statefile.Read(src)
-	if err != nil {
-		return nil, err
+	var s TFState
+	if err := json.NewDecoder(src).Decode(&s.state); err != nil {
+		return nil, errors.Wrap(err, "invalid json")
 	}
-	return s, err
+	return &s, err
 }
 
 // Lookup lookups attributes of the specified key in tfstate
-func (s *TFState) Lookup(key string) (*Attribute, error) {
-	attr, query, err := lookupAttrs(s.statefile, key)
+func (s *TFState) Lookup(key string) (*Object, error) {
+	resQuery, attrQuery, err := parseAddress(key)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("[debug] attrs", attr.String())
-	return attr.Query(query)
+
+	attr, err := (&Object{s.state}).Query(resQuery)
+	if err != nil {
+		return nil, err
+	}
+	return attr.Query(attrQuery)
 }
 
-func lookupAttrs(file *statefile.File, key string) (*Attribute, string, error) {
-	name := key
-	var module *states.Module
-	nameParts := strings.Split(name, ".")
-	if len(nameParts) < 2 ||
-		nameParts[0] == "module" && len(nameParts) < 4 ||
-		nameParts[0] == "data" && len(nameParts) < 3 {
-		return nil, "", errors.New("invalid key")
+func parseAddress(key string) (string, string, error) {
+	parts := strings.Split(key, ".")
+	if len(parts) < 2 ||
+		parts[0] == "module" && len(parts) < 4 ||
+		parts[0] == "data" && len(parts) < 3 {
+		return "", "", fmt.Errorf("invalid address: %s", key)
 	}
 
-	if nameParts[0] == "module" {
-		mi, ds := addrs.ParseModuleInstanceStr(strings.Join(nameParts[0:2], "."))
-		if err := ds.Err(); err != nil {
-			return nil, "", err
-		}
-		module = file.State.Module(mi)
-		if module == nil {
-			return nil, "", fmt.Errorf("module %s is not found", mi)
-		}
-		nameParts = nameParts[2:] // remove module prefix
-	} else {
-		module = file.State.Module(nil)
-	}
-	log.Println("[debug] module", module.Addr.String())
-	log.Println("[debug] name", nameParts)
-
+	resq := []string{".resources[]"}
 	var query string
-	if nameParts[0] == "data" {
-		name = strings.Join(nameParts[0:3], ".")
-		query = "." + strings.Join(nameParts[3:], ".")
+	if parts[0] == "module" {
+		resq = append(resq, fmt.Sprintf(`select(.module == "module.%s")`, parts[1]))
+		parts = parts[2:] // remove module prefix
+	}
+
+	if parts[0] == "data" {
+		resq = append(resq, fmt.Sprintf(
+			`select(.mode == "data" and .type == "%s" and .name == "%s").instances[0].attributes`,
+			parts[1], parts[2],
+		))
+		query = "." + strings.Join(parts[3:], ".")
 	} else {
-		name = strings.Join(nameParts[0:2], ".")
-		query = "." + strings.Join(nameParts[2:], ".")
-	}
-	log.Println("[debug] name", name, "query", query)
+		n := parts[1] // foo["bar"], foo[0]
 
-	var instance *states.ResourceInstance
-	if strings.Contains(name, "[") {
-		log.Println("[debug] finding resource instance name", name)
-		ri, ds := addrs.ParseAbsResourceInstanceStr(name)
-		if err := ds.Err(); err != nil {
-			return nil, "", errors.Wrapf(err, "failed to lookup resource %s", name)
+		if i := strings.Index(n, "["); i != -1 { // each
+			indexKey := n[i+1 : len(n)-1] // "bar", 0
+			name := n[0:i]                // foo
+			resq = append(resq, fmt.Sprintf(
+				`select(.mode == "managed" and .type == "%s" and .name == "%s").instances[] | select(.index_key == %s).attributes`,
+				parts[0], name, indexKey,
+			))
+		} else {
+			resq = append(resq, fmt.Sprintf(
+				`select(.mode == "managed" and .type == "%s" and .name == "%s" and .each == null).instances[0].attributes`,
+				parts[0], parts[1],
+			))
 		}
-		instance = module.ResourceInstance(ri.Resource)
-	} else {
-		log.Println("[debug] finding resource name", name)
-		rs, ds := addrs.ParseAbsResourceStr(name)
-		if err := ds.Err(); err != nil {
-			return nil, "", errors.Wrapf(err, "failed to lookup resource %s", name)
-		}
-		resource := module.Resource(rs.Resource)
-		if resource == nil {
-			return nil, query, fmt.Errorf("%s is not found in state file", key)
-		}
-		instance = resource.Instance(nil)
+		query = "." + strings.Join(parts[2:], ".")
 	}
-
-	if instance == nil || instance.Current == nil {
-		return nil, query, fmt.Errorf("%s is not found in state file", key)
-	}
-
-	var value interface{}
-	if err := json.Unmarshal(instance.Current.AttrsJSON, &value); err != nil {
-		return nil, query, errors.Wrap(err, "invalid json attributes")
-	}
-	return &Attribute{Value: value}, query, nil
+	return strings.Join(resq, " | "), query, nil
 }

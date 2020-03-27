@@ -1,13 +1,11 @@
 package tfstate_test
 
 import (
-	"log"
 	"os"
 	"testing"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
 	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/logutils"
 )
 
 type TestSuite struct {
@@ -17,27 +15,24 @@ type TestSuite struct {
 
 func init() {
 	testing.Init()
-	level := os.Getenv("LOG_LEVEL")
-	if level == "" {
-		level = "warn"
-	}
-	filter := &logutils.LevelFilter{
-		Levels:   []logutils.LogLevel{"debug", "warn", "error"},
-		MinLevel: logutils.LogLevel(level),
-		Writer:   os.Stderr,
-	}
-	log.SetOutput(filter)
 }
 
 var TestSuitesOK = []TestSuite{
-
 	TestSuite{
 		Key:    "data.aws_caller_identity.current.account_id",
 		Result: "123456789012",
 	},
 	TestSuite{
+		Key:    "data.aws_caller_identity.xxxx.account_id",
+		Result: nil,
+	},
+	TestSuite{
 		Key:    "aws_acm_certificate.main.validation_method",
 		Result: "DNS",
+	},
+	TestSuite{
+		Key:    "aws_acm_certificate.main.validation_method_xxx",
+		Result: nil,
 	},
 	TestSuite{
 		Key:    "aws_acm_certificate.main.subject_alternative_names",
@@ -48,12 +43,36 @@ var TestSuitesOK = []TestSuite{
 		Result: "*.example.com",
 	},
 	TestSuite{
+		Key:    "aws_acm_certificate.main.subject_alternative_names[2]",
+		Result: nil,
+	},
+	TestSuite{
 		Key:    `module.logs.aws_cloudwatch_log_group.main["app"].id`,
 		Result: "/main/app",
 	},
 	TestSuite{
+		Key:    `module.xxx.aws_cloudwatch_log_group.main["app"].id`,
+		Result: nil,
+	},
+	TestSuite{
 		Key:    `module.logs.aws_cloudwatch_log_group.main["app"].retention_in_days`,
 		Result: float64(30),
+	},
+	TestSuite{
+		Key:    `module.logs.aws_cloudwatch_log_group.main["app"].retention_in_days_xxx`,
+		Result: nil,
+	},
+	TestSuite{
+		Key:    `module.logs.aws_cloudwatch_log_group.main`,
+		Result: nil,
+	},
+	TestSuite{
+		Key:    `aws_iam_role_policy_attachment.ec2[1].id`,
+		Result: "ec2-20190801065413531100000001",
+	},
+	TestSuite{
+		Key:    `aws_iam_role_policy_attachment.ec2[2].id`,
+		Result: nil,
 	},
 }
 

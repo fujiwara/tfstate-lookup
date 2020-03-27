@@ -3,25 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
-	"github.com/hashicorp/logutils"
 )
-
-func init() {
-	level := os.Getenv("LOG_LEVEL")
-	if level == "" {
-		level = "warn"
-	}
-	filter := &logutils.LevelFilter{
-		Levels:   []logutils.LogLevel{"debug", "warn", "error"},
-		MinLevel: logutils.LogLevel(level),
-		Writer:   os.Stderr,
-	}
-	log.SetOutput(filter)
-}
 
 func main() {
 	if err := _main(); err != nil {
