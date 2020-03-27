@@ -1,13 +1,11 @@
 package tfstate_test
 
 import (
-	"log"
 	"os"
 	"testing"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
 	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/logutils"
 )
 
 type TestSuite struct {
@@ -17,16 +15,6 @@ type TestSuite struct {
 
 func init() {
 	testing.Init()
-	level := os.Getenv("LOG_LEVEL")
-	if level == "" {
-		level = "debug"
-	}
-	filter := &logutils.LevelFilter{
-		Levels:   []logutils.LogLevel{"debug", "warn", "error"},
-		MinLevel: logutils.LogLevel(level),
-		Writer:   os.Stderr,
-	}
-	log.SetOutput(filter)
 }
 
 var TestSuitesOK = []TestSuite{

@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/google/go-cmp v0.3.1
-	github.com/hashicorp/logutils v1.0.0
 	github.com/itchyny/gojq v0.9.0
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
