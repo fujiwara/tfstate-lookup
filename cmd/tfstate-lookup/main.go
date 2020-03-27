@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -34,12 +33,9 @@ func main() {
 func _main() error {
 	var (
 		stateFile string
-		raw       bool
 	)
 	flag.StringVar(&stateFile, "state", "terraform.tfstate", "tfstate file path")
 	flag.StringVar(&stateFile, "s", "terraform.tfstate", "tfstate file path")
-	flag.BoolVar(&raw, "raw", false, "raw output")
-	flag.BoolVar(&raw, "r", false, "raw output")
 	flag.Parse()
 	if len(flag.Args()) == 0 {
 		flag.Usage()
@@ -50,6 +46,7 @@ func _main() error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	s, err := tfstate.Read(f)
 	if err != nil {
@@ -59,17 +56,6 @@ func _main() error {
 	if err != nil {
 		return err
 	}
-	if raw {
-		switch res.(type) {
-		case string, float64:
-			fmt.Fprintln(os.Stdout, res)
-		default:
-			json.NewEncoder(os.Stdout).Encode(res)
-		}
-	} else {
-		enc := json.NewEncoder(os.Stdout)
-		enc.SetIndent("", "  ")
-		enc.Encode(res)
-	}
+	fmt.Println(res.String())
 	return nil
 }

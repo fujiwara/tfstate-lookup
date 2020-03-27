@@ -71,7 +71,7 @@ func TestLookupOK(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if diff := cmp.Diff(res, ts.Result); diff != "" {
+		if diff := cmp.Diff(res.Value, ts.Result); diff != "" {
 			t.Errorf("%s unexpected result %s", ts.Key, diff)
 		}
 	}

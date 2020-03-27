@@ -14,6 +14,40 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Attribute represents tfstate resource attributes
+type Attribute struct {
+	Value interface{}
+}
+
+func (a Attribute) String() string {
+	switch v := a.Value; v.(type) {
+	case string, float64:
+		return fmt.Sprint(v)
+	default:
+		b, _ := json.Marshal(v)
+		return string(b)
+	}
+}
+
+func (a *Attribute) Query(query string) (*Attribute, error) {
+	jq, err := gojq.Parse(query)
+	if err != nil {
+		return nil, err
+	}
+	iter := jq.Run(a.Value)
+	for {
+		v, ok := iter.Next()
+		if !ok {
+			break
+		}
+		if err, ok := v.(error); ok {
+			return nil, err
+		}
+		return &Attribute{Value: v}, nil
+	}
+	return nil, fmt.Errorf("%s is not found in attributes", query)
+}
+
 // TFState represents a tfstate
 type TFState struct {
 	statefile *statefile.File
@@ -31,21 +65,16 @@ func Read(src io.Reader) (*TFState, error) {
 }
 
 // Lookup lookups attributes of the specified key in tfstate
-func (s *TFState) Lookup(key string) (interface{}, error) {
-	b, query, err := lookupAttrs(s.statefile, key)
+func (s *TFState) Lookup(key string) (*Attribute, error) {
+	attr, query, err := lookupAttrs(s.statefile, key)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("[debug] attrs", string(b))
-
-	var obj interface{}
-	if err := json.Unmarshal(b, &obj); err != nil {
-		return nil, err
-	}
-	return queryObj(obj, query)
+	log.Println("[debug] attrs", attr.String())
+	return attr.Query(query)
 }
 
-func lookupAttrs(file *statefile.File, key string) ([]byte, string, error) {
+func lookupAttrs(file *statefile.File, key string) (*Attribute, string, error) {
 	name := key
 	var module *states.Module
 	nameParts := strings.Split(name, ".")
@@ -105,24 +134,10 @@ func lookupAttrs(file *statefile.File, key string) ([]byte, string, error) {
 	if instance == nil || instance.Current == nil {
 		return nil, query, fmt.Errorf("%s is not found in state file", key)
 	}
-	return instance.Current.AttrsJSON, query, nil
-}
 
-func queryObj(obj interface{}, query string) (interface{}, error) {
-	jq, err := gojq.Parse(query)
-	if err != nil {
-		return nil, err
+	var value interface{}
+	if err := json.Unmarshal(instance.Current.AttrsJSON, &value); err != nil {
+		return nil, query, errors.Wrap(err, "invalid json attributes")
 	}
-	iter := jq.Run(obj)
-	for {
-		v, ok := iter.Next()
-		if !ok {
-			break
-		}
-		if err, ok := v.(error); ok {
-			return nil, err
-		}
-		return v, nil
-	}
-	return nil, fmt.Errorf("%s is not found in attributes", query)
+	return &Attribute{Value: value}, query, nil
 }
