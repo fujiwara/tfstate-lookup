@@ -2,27 +2,15 @@
 
 Lookup resource attributes in tfstate.
 
-## Usage (Go package)
+## Install
 
-See details in [godoc](https://godoc.org/github.com/fujiwara/tfstate-lookup/tfstate).
+### homebrew (mac os only)
 
-```go
-package main
-
-import(
-    "fmt"
-    "os"
-
-    "github.com/fujiwara/tfstate-lookup/tfstate"
-)
-
-func main() {
-    f, _ := os.Open("terraform.tfstate")
-    state, _ := tfstate.Read(f)
-    attrs, _ := state.Lookup("aws_vpc.main.id")
-    fmt.Println(attrs.String())
-}
 ```
+$ brew install tfstate-lookup
+```
+
+### [Binary releases](https://github.com/fujiwara/tfstate-lookup/releases)
 
 ## Usage (command)
 
@@ -35,7 +23,7 @@ Usage of tfstate-lookup:
 ```
 
 ```console
-$ tfstate-lookup aws_vpc.main.id
+$ tfstate-lookup -s .terraform/terraform.tfstate aws_vpc.main.id
 vpc-1a2b3c4d
 
 $ tfstate-lookup aws_vpc.main
@@ -60,6 +48,30 @@ $ tfstate-lookup aws_vpc.main
   "tags": {
     "Name": "main"
   }
+}
+```
+
+A remote state is supported only S3 backend currently.
+
+## Usage (Go package)
+
+See details in [godoc](https://godoc.org/github.com/fujiwara/tfstate-lookup/tfstate).
+
+```go
+package main
+
+import(
+    "fmt"
+    "os"
+
+    "github.com/fujiwara/tfstate-lookup/tfstate"
+)
+
+func main() {
+    f, _ := os.Open("terraform.tfstate")
+    state, _ := tfstate.Read(f)
+    attrs, _ := state.Lookup("aws_vpc.main.id")
+    fmt.Println(attrs.String())
 }
 ```
 
