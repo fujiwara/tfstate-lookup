@@ -27,13 +27,7 @@ func _main() error {
 		return nil
 	}
 
-	f, err := os.Open(stateFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	s, err := tfstate.Read(f)
+	s, err := tfstate.ReadFile(stateFile)
 	if err != nil {
 		return err
 	}

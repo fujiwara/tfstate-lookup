@@ -4,10 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/itchyny/gojq"
 	"github.com/pkg/errors"
+)
+
+var (
+	defaultWorkspace          = "default"
+	defaultWorkspeceKeyPrefix = "env:"
 )
 
 type Object struct {
@@ -46,17 +54,55 @@ func (a *Object) Query(query string) (*Object, error) {
 
 // TFState represents a tfstate
 type TFState struct {
-	state interface{}
+	state tfstate
+}
+
+type tfstate struct {
+	Resources []interface{} `json:"resources"`
+	Backend   *backend      `json:"backend"`
+}
+
+type backend struct {
+	Type   string `json:"type"`
+	Config map[string]*string
 }
 
 // Read reads a tfstate from io.Reader
 func Read(src io.Reader) (*TFState, error) {
-	var err error
+	return ReadWithWorkspace(src, defaultWorkspace)
+}
+
+// ReadWithWorkspace reads a tfstate from io.Reader with workspace
+func ReadWithWorkspace(src io.Reader, ws string) (*TFState, error) {
+	if ws == "" {
+		ws = defaultWorkspace
+	}
 	var s TFState
 	if err := json.NewDecoder(src).Decode(&s.state); err != nil {
 		return nil, errors.Wrap(err, "invalid json")
 	}
-	return &s, err
+	if s.state.Backend != nil {
+		remote, err := readRemoteState(s.state.Backend, ws)
+		if err != nil {
+			return nil, err
+		}
+		defer remote.Close()
+		return Read(remote)
+	}
+	return &s, nil
+}
+
+// ReadFile reads terraform.tfstate from the file (a workspace reads from environment file in the same directory)
+func ReadFile(file string) (*TFState, error) {
+	ws, _ := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "environment"))
+	// if not exist, don't care (using default workspace)
+
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return ReadWithWorkspace(f, string(ws))
 }
 
 // Lookup lookups attributes of the specified key in tfstate
@@ -66,7 +112,7 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 		return nil, err
 	}
 
-	attr, err := (&Object{s.state}).Query(resQuery)
+	attr, err := (&Object{s.state.Resources}).Query(resQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +127,7 @@ func parseAddress(key string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid address: %s", key)
 	}
 
-	resq := []string{".resources[]"}
+	resq := []string{".[]"}
 	var query string
 	if parts[0] == "module" {
 		resq = append(resq, fmt.Sprintf(`select(.module == "module.%s")`, parts[1]))
