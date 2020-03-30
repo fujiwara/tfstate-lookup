@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
 )
@@ -27,13 +29,17 @@ func _main() error {
 		return nil
 	}
 
+	var workspace string
+	env, _ := ioutil.ReadFile(filepath.Join(filepath.Dir(stateFile), "environment"))
+	workspace = string(env)
+
 	f, err := os.Open(stateFile)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	s, err := tfstate.Read(f)
+	s, err := tfstate.ReadWithWorkspace(f, workspace)
 	if err != nil {
 		return err
 	}
