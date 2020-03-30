@@ -68,8 +68,7 @@ import(
 )
 
 func main() {
-    f, _ := os.Open("terraform.tfstate")
-    state, _ := tfstate.Read(f)
+    state, _ := tfstate.ReadFile("/path/to/.terraform/terraform.tfstate")
     attrs, _ := state.Lookup("aws_vpc.main.id")
     fmt.Println(attrs.String())
 }
