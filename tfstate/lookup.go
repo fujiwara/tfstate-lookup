@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/itchyny/gojq"
@@ -87,6 +90,19 @@ func ReadWithWorkspace(src io.Reader, ws string) (*TFState, error) {
 		return Read(remote)
 	}
 	return &s, nil
+}
+
+// ReadFile reads terraform.tfstate from the file (a workspace reads from environment file in the same directory)
+func ReadFile(file string) (*TFState, error) {
+	ws, _ := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "environment"))
+	// if not exist, don't care (using default workspace)
+
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return ReadWithWorkspace(f, string(ws))
 }
 
 // Lookup lookups attributes of the specified key in tfstate
