@@ -20,8 +20,8 @@ func init() {
 var TestNames = []string{
 	`data.aws_caller_identity.current`,
 	`aws_acm_certificate.main`,
-	`aws_cloudwatch_log_group.main["app"]`,
-	`aws_cloudwatch_log_group.main["web"]`,
+	`module.logs.aws_cloudwatch_log_group.main["app"]`,
+	`module.logs.aws_cloudwatch_log_group.main["web"]`,
 	`aws_iam_role_policy_attachment.ec2[0]`,
 	`aws_iam_role_policy_attachment.ec2[1]`,
 }
@@ -99,6 +99,7 @@ func TestLookupOK(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+		t.Log(ts.Key, res)
 		if diff := cmp.Diff(res.Value, ts.Result); diff != "" {
 			t.Errorf("%s unexpected result %s", ts.Key, diff)
 		}
