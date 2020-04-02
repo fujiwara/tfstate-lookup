@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
 )
@@ -22,19 +23,23 @@ func _main() error {
 	flag.StringVar(&stateFile, "state", "terraform.tfstate", "tfstate file path")
 	flag.StringVar(&stateFile, "s", "terraform.tfstate", "tfstate file path")
 	flag.Parse()
-	if len(flag.Args()) == 0 {
-		flag.Usage()
-		return nil
-	}
 
 	s, err := tfstate.ReadFile(stateFile)
 	if err != nil {
 		return err
 	}
-	res, err := s.Lookup(flag.Arg(0))
-	if err != nil {
-		return err
+	if len(flag.Args()) == 0 {
+		names, err := s.List()
+		if err != nil {
+			return err
+		}
+		fmt.Println(strings.Join(names, "\n"))
+	} else {
+		res, err := s.Lookup(flag.Arg(0))
+		if err != nil {
+			return err
+		}
+		fmt.Println(res.String())
 	}
-	fmt.Println(res.String())
 	return nil
 }

@@ -119,6 +119,39 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 	return attr.Query(attrQuery)
 }
 
+func (s *TFState) List() ([]string, error) {
+	names := make([]string, 0, len(s.state.Resources))
+	for _, _r := range s.state.Resources {
+		r, ok := _r.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		switch r["mode"] {
+		case "data":
+			names = append(names, fmt.Sprintf("data.%s.%s", r["type"], r["name"]))
+		case "managed":
+			if r["each"] != nil {
+				instances := r["instances"].([]interface{})
+				if r["each"].(string) == "map" {
+					for _, _i := range instances {
+						i := _i.(map[string]interface{})
+						names = append(names, fmt.Sprintf("%s.%s[\"%s\"]", r["type"], r["name"], i["index_key"]))
+					}
+				}
+				if r["each"].(string) == "list" {
+					for _, _i := range instances {
+						i := _i.(map[string]interface{})
+						names = append(names, fmt.Sprintf("%s.%s[%.f]", r["type"], r["name"], i["index_key"]))
+					}
+				}
+			} else {
+				names = append(names, fmt.Sprintf("%s.%s", r["type"], r["name"]))
+			}
+		}
+	}
+	return names, nil
+}
+
 func parseAddress(key string) (string, string, error) {
 	parts := strings.Split(key, ".")
 	if len(parts) < 2 ||
