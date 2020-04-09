@@ -17,6 +17,15 @@ func init() {
 	testing.Init()
 }
 
+var TestNames = []string{
+	`data.aws_caller_identity.current`,
+	`aws_acm_certificate.main`,
+	`module.logs.aws_cloudwatch_log_group.main["app"]`,
+	`module.logs.aws_cloudwatch_log_group.main["web"]`,
+	`aws_iam_role_policy_attachment.ec2[0]`,
+	`aws_iam_role_policy_attachment.ec2[1]`,
+}
+
 var TestSuitesOK = []TestSuite{
 	TestSuite{
 		Key:    "data.aws_caller_identity.current.account_id",
@@ -90,8 +99,27 @@ func TestLookupOK(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+		t.Log(ts.Key, res)
 		if diff := cmp.Diff(res.Value, ts.Result); diff != "" {
 			t.Errorf("%s unexpected result %s", ts.Key, diff)
 		}
+	}
+}
+
+func TestList(t *testing.T) {
+	f, err := os.Open("test/terraform.tfstate")
+	if err != nil {
+		t.Error(err)
+	}
+	state, err := tfstate.Read(f)
+	if err != nil {
+		t.Error(err)
+	}
+	names, err := state.List()
+	if err != nil {
+		t.Error(err)
+	}
+	if diff := cmp.Diff(names, TestNames); diff != "" {
+		t.Errorf("unexpected list names %s", diff)
 	}
 }

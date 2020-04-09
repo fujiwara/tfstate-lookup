@@ -1,6 +1,7 @@
 package tfstate
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,13 +59,30 @@ type TFState struct {
 }
 
 type tfstate struct {
-	Resources []interface{} `json:"resources"`
-	Backend   *backend      `json:"backend"`
+	Resources []resource `json:"resources"`
+	Backend   *backend   `json:"backend"`
 }
 
 type backend struct {
 	Type   string `json:"type"`
 	Config map[string]*string
+}
+
+type resource struct {
+	Module    string     `json:"module"`
+	Mode      string     `json:"mode"`
+	Type      string     `json:"type"`
+	Name      string     `json:"name"`
+	Each      string     `json:"each"`
+	Provider  string     `json:"provider"`
+	Instances []instance `json:"instances"`
+}
+
+type instance struct {
+	IndexKey      json.RawMessage `json:"index_key"`
+	SchemaVersion int             `json:"schema_version"`
+	Attributes    interface{}     `json:"attributes"`
+	Private       string          `json:"private"`
 }
 
 // Read reads a tfstate from io.Reader
@@ -107,71 +125,71 @@ func ReadFile(file string) (*TFState, error) {
 
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
-	resQuery, attrQuery, err := parseAddress(key)
+	selector, query, err := parseAddress(key)
 	if err != nil {
 		return nil, err
 	}
 
-	attr, err := (&Object{s.state.Resources}).Query(resQuery)
-	if err != nil {
-		return nil, err
+	for _, r := range s.state.Resources {
+		if i := selector(r); i != nil {
+			attr := &Object{i.Attributes}
+			return attr.Query(query)
+		}
 	}
-	return attr.Query(attrQuery)
+	return &Object{}, nil
 }
 
 func (s *TFState) List() ([]string, error) {
 	names := make([]string, 0, len(s.state.Resources))
-	for _, _r := range s.state.Resources {
-		r, ok := _r.(map[string]interface{})
-		if !ok {
-			continue
+	for _, r := range s.state.Resources {
+		var module string
+		if r.Module != "" {
+			module = r.Module+"."
 		}
-		switch r["mode"] {
+		switch r.Mode {
 		case "data":
-			names = append(names, fmt.Sprintf("data.%s.%s", r["type"], r["name"]))
+			names = append(names, module+fmt.Sprintf("data.%s.%s", r.Type, r.Name))
 		case "managed":
-			if r["each"] != nil {
-				instances := r["instances"].([]interface{})
-				if r["each"].(string) == "map" {
-					for _, _i := range instances {
-						i := _i.(map[string]interface{})
-						names = append(names, fmt.Sprintf("%s.%s[\"%s\"]", r["type"], r["name"], i["index_key"]))
-					}
-				}
-				if r["each"].(string) == "list" {
-					for _, _i := range instances {
-						i := _i.(map[string]interface{})
-						names = append(names, fmt.Sprintf("%s.%s[%.f]", r["type"], r["name"], i["index_key"]))
-					}
+			if r.Each != "" {
+				for _, i := range r.Instances  {
+					names = append(names,
+						module+fmt.Sprintf("%s.%s[%s]", r.Type, r.Name, string(i.IndexKey)),
+					)
 				}
 			} else {
-				names = append(names, fmt.Sprintf("%s.%s", r["type"], r["name"]))
+				names = append(names, module+fmt.Sprintf("%s.%s", r.Type, r.Name))
 			}
 		}
 	}
 	return names, nil
 }
 
-func parseAddress(key string) (string, string, error) {
+type selectorFunc func(r resource) *instance
+
+func parseAddress(key string) (selectorFunc, string, error) {
+	var selector selectorFunc
+	var query string
+
 	parts := strings.Split(key, ".")
 	if len(parts) < 2 ||
 		parts[0] == "module" && len(parts) < 4 ||
 		parts[0] == "data" && len(parts) < 3 {
-		return "", "", fmt.Errorf("invalid address: %s", key)
+		return nil, "", fmt.Errorf("invalid address: %s", key)
 	}
 
-	resq := []string{".[]"}
-	var query string
+	var module string
 	if parts[0] == "module" {
-		resq = append(resq, fmt.Sprintf(`select(.module == "module.%s")`, parts[1]))
+		module = "module."+parts[1]
 		parts = parts[2:] // remove module prefix
 	}
 
 	if parts[0] == "data" {
-		resq = append(resq, fmt.Sprintf(
-			`select(.mode == "data" and .type == "%s" and .name == "%s").instances[0].attributes`,
-			parts[1], parts[2],
-		))
+		selector = func(r resource) *instance {
+			if r.Module == module && r.Mode == "data" && r.Type == parts[1] && r.Name == parts[2] {
+				return &r.Instances[0]
+			}
+			return nil
+		}
 		query = "." + strings.Join(parts[3:], ".")
 	} else {
 		n := parts[1] // foo["bar"], foo[0]
@@ -179,17 +197,26 @@ func parseAddress(key string) (string, string, error) {
 		if i := strings.Index(n, "["); i != -1 { // each
 			indexKey := n[i+1 : len(n)-1] // "bar", 0
 			name := n[0:i]                // foo
-			resq = append(resq, fmt.Sprintf(
-				`select(.mode == "managed" and .type == "%s" and .name == "%s").instances[] | select(.index_key == %s).attributes`,
-				parts[0], name, indexKey,
-			))
+			selector = func(r resource) *instance {
+				if r.Module == module && r.Mode == "managed" && r.Type == parts[0] && r.Name == name && (r.Each == "map" || r.Each == "list") {
+					for _, i := range r.Instances {
+						if bytes.Equal(i.IndexKey, []byte(indexKey)) {
+							instance := i
+							return &instance
+						}
+					}
+				}
+				return nil
+			}
 		} else {
-			resq = append(resq, fmt.Sprintf(
-				`select(.mode == "managed" and .type == "%s" and .name == "%s" and .each == null).instances[0].attributes`,
-				parts[0], parts[1],
-			))
+			selector = func(r resource) *instance {
+				if r.Module == module && r.Mode == "managed" && r.Type == parts[0] && r.Name == parts[1] && r.Each == "" {
+					return &r.Instances[0]
+				}
+				return nil
+			}
 		}
 		query = "." + strings.Join(parts[2:], ".")
 	}
-	return strings.Join(resq, " | "), query, nil
+	return selector, query, nil
 }
