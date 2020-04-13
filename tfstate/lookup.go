@@ -59,8 +59,9 @@ type TFState struct {
 }
 
 type tfstate struct {
-	Resources []resource `json:"resources"`
-	Backend   *backend   `json:"backend"`
+	Resources []resource             `json:"resources"`
+	Outputs   map[string]interface{} `json:"outputs"`
+	Backend   *backend               `json:"backend"`
 }
 
 type backend struct {
@@ -123,8 +124,25 @@ func ReadFile(file string) (*TFState, error) {
 	return ReadWithWorkspace(f, string(ws))
 }
 
+func (s *TFState) output(key string) (*Object, error) {
+	parts := strings.SplitN(key, ".", 3)
+	var query string
+	name := parts[1]
+	if len(parts) == 3 {
+		query = "." + parts[2]
+	} else {
+		query = "."
+	}
+	attr := &Object{s.state.Outputs[name]}
+	return attr.Query(query)
+}
+
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
+	if strings.HasPrefix(key, "output.") {
+		return s.output(key)
+	}
+
 	selector, query, err := parseAddress(key)
 	if err != nil {
 		return nil, err
@@ -139,19 +157,23 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 	return &Object{}, nil
 }
 
+// List lists resource and output names in tfstate
 func (s *TFState) List() ([]string, error) {
 	names := make([]string, 0, len(s.state.Resources))
+	for key := range s.state.Outputs {
+		names = append(names, "output."+key)
+	}
 	for _, r := range s.state.Resources {
 		var module string
 		if r.Module != "" {
-			module = r.Module+"."
+			module = r.Module + "."
 		}
 		switch r.Mode {
 		case "data":
 			names = append(names, module+fmt.Sprintf("data.%s.%s", r.Type, r.Name))
 		case "managed":
 			if r.Each != "" {
-				for _, i := range r.Instances  {
+				for _, i := range r.Instances {
 					names = append(names,
 						module+fmt.Sprintf("%s.%s[%s]", r.Type, r.Name, string(i.IndexKey)),
 					)
@@ -179,7 +201,7 @@ func parseAddress(key string) (selectorFunc, string, error) {
 
 	var module string
 	if parts[0] == "module" {
-		module = "module."+parts[1]
+		module = "module." + parts[1]
 		parts = parts[2:] // remove module prefix
 	}
 

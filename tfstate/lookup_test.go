@@ -18,6 +18,8 @@ func init() {
 }
 
 var TestNames = []string{
+	`output.foo`,
+	`output.bar`,
 	`data.aws_caller_identity.current`,
 	`aws_acm_certificate.main`,
 	`module.logs.aws_cloudwatch_log_group.main["app"]`,
@@ -81,6 +83,18 @@ var TestSuitesOK = []TestSuite{
 	},
 	TestSuite{
 		Key:    `aws_iam_role_policy_attachment.ec2[2].id`,
+		Result: nil,
+	},
+	TestSuite{
+		Key:    `output.foo.value`,
+		Result: "FOO",
+	},
+	TestSuite{
+		Key:    `output.bar.value[0]`,
+		Result: "A",
+	},
+	TestSuite{
+		Key:    `output.baz.value`,
 		Result: nil,
 	},
 }
