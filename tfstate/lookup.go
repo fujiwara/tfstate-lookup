@@ -14,6 +14,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	StateVersion = 4
+)
+
 var (
 	defaultWorkspace          = "default"
 	defaultWorkspeceKeyPrefix = "env:"
@@ -50,7 +54,7 @@ func (a *Object) Query(query string) (*Object, error) {
 		}
 		return &Object{v}, nil
 	}
-	return &Object{}, nil // not found
+	return nil, errors.Errorf("%s is not found in the state", query)
 }
 
 // TFState represents a tfstate
@@ -59,9 +63,13 @@ type TFState struct {
 }
 
 type tfstate struct {
-	Resources []resource             `json:"resources"`
-	Outputs   map[string]interface{} `json:"outputs"`
-	Backend   *backend               `json:"backend"`
+	Resources        []resource             `json:"resources"`
+	Outputs          map[string]interface{} `json:"outputs"`
+	Backend          *backend               `json:"backend"`
+	Version          int                    `json:"version"`
+	TerraformVersion string                 `json:"terraform_version"`
+	Serial           int                    `json:"serial"`
+	Lineage          string                 `json:"lineage"`
 }
 
 type backend struct {
@@ -80,10 +88,11 @@ type resource struct {
 }
 
 type instance struct {
-	IndexKey      json.RawMessage `json:"index_key"`
-	SchemaVersion int             `json:"schema_version"`
-	Attributes    interface{}     `json:"attributes"`
-	Private       string          `json:"private"`
+	IndexKey       json.RawMessage `json:"index_key"`
+	SchemaVersion  int             `json:"schema_version"`
+	Attributes     interface{}     `json:"attributes"`
+	AttributesFlat interface{}     `json:"attributes_flat"`
+	Private        string          `json:"private"`
 }
 
 // Read reads a tfstate from io.Reader
@@ -107,6 +116,9 @@ func ReadWithWorkspace(src io.Reader, ws string) (*TFState, error) {
 		}
 		defer remote.Close()
 		return Read(remote)
+	}
+	if s.state.Version != StateVersion {
+		return nil, errors.Errorf("unsupported state version %d", s.state.Version)
 	}
 	return &s, nil
 }
@@ -150,7 +162,7 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 
 	for _, r := range s.state.Resources {
 		if i := selector(r); i != nil {
-			attr := &Object{i.Attributes}
+			attr := &Object{noneNil(i.Attributes, i.AttributesFlat)}
 			return attr.Query(query)
 		}
 	}
@@ -204,7 +216,6 @@ func parseAddress(key string) (selectorFunc, string, error) {
 		module = "module." + parts[1]
 		parts = parts[2:] // remove module prefix
 	}
-
 	if parts[0] == "data" {
 		selector = func(r resource) *instance {
 			if r.Module == module && r.Mode == "data" && r.Type == parts[1] && r.Name == parts[2] {
@@ -214,7 +225,7 @@ func parseAddress(key string) (selectorFunc, string, error) {
 		}
 		query = "." + strings.Join(parts[3:], ".")
 	} else {
-		n := parts[1] // foo["bar"], foo[0]
+		n := parts[1] // foo, foo["bar"], foo[0]
 
 		if i := strings.Index(n, "["); i != -1 { // each
 			indexKey := n[i+1 : len(n)-1] // "bar", 0
@@ -241,4 +252,13 @@ func parseAddress(key string) (selectorFunc, string, error) {
 		query = "." + strings.Join(parts[2:], ".")
 	}
 	return selector, query, nil
+}
+
+func noneNil(args ...interface{}) interface{} {
+	for _, v := range args {
+		if v != nil {
+			return v
+		}
+	}
+	return nil
 }
