@@ -27,14 +27,13 @@ type Object struct {
 	Value interface{}
 }
 
+func (a Object) Bytes() []byte {
+	b, _ := json.Marshal(a.Value)
+	return b
+}
+
 func (a Object) String() string {
-	switch v := a.Value; v.(type) {
-	case string, float64:
-		return fmt.Sprint(v)
-	default:
-		b, _ := json.Marshal(v)
-		return string(b)
-	}
+	return string(a.Bytes())
 }
 
 // Query queries object by go-jq
