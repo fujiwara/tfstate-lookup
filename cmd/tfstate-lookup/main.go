@@ -57,7 +57,7 @@ func _main() error {
 		}
 		b := res.Bytes()
 		w := os.Stdout
-		if isatty.IsTerminal(w.Fd()) {
+		if isatty.IsTerminal(w.Fd()) && (bytes.HasPrefix(b, []byte("[")) || bytes.HasPrefix(b, []byte("{"))) {
 			var out bytes.Buffer
 			json.Indent(&out, b, "", "  ")
 			out.WriteRune('\n')

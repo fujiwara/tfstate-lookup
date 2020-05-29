@@ -28,8 +28,13 @@ type Object struct {
 }
 
 func (a Object) Bytes() []byte {
-	b, _ := json.Marshal(a.Value)
-	return b
+	switch v := (a.Value).(type) {
+	case string:
+		return []byte(v)
+	default:
+		b, _ := json.Marshal(v)
+		return b
+	}
 }
 
 func (a Object) String() string {
