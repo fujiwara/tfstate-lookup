@@ -19,10 +19,20 @@ func readRemoteState(b *backend, ws string) (io.ReadCloser, error) {
 	}
 }
 
-func readS3(config map[string]*string, ws string) (io.ReadCloser, error) {
-	key := *config["key"]
+func strp(v interface{}) *string {
+	if v == nil {
+		return nil
+	}
+	if vs, ok := v.(string); ok {
+		return &vs
+	}
+	return nil
+}
+
+func readS3(config map[string]interface{}, ws string) (io.ReadCloser, error) {
+	key := *strp(config["key"])
 	if ws != defaultWorkspace {
-		if prefix := config["workspace_key_prefix"]; prefix != nil {
+		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
 			key = path.Join(*prefix, ws, key)
 		} else {
 			key = path.Join(defaultWorkspeceKeyPrefix, ws, key)
@@ -30,7 +40,7 @@ func readS3(config map[string]*string, ws string) (io.ReadCloser, error) {
 	}
 	sess, err := session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
-			Region: config["region"],
+			Region: strp(config["region"]),
 		},
 		SharedConfigState: session.SharedConfigEnable,
 	})
@@ -40,7 +50,7 @@ func readS3(config map[string]*string, ws string) (io.ReadCloser, error) {
 	svc := s3.New(sess)
 
 	result, err := svc.GetObject(&s3.GetObjectInput{
-		Bucket: config["bucket"],
+		Bucket: strp(config["bucket"]),
 		Key:    aws.String(key),
 	})
 	if err != nil {
