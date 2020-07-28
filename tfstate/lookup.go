@@ -78,7 +78,7 @@ type tfstate struct {
 
 type backend struct {
 	Type   string `json:"type"`
-	Config map[string]*string
+	Config map[string]interface{}
 }
 
 type resource struct {
