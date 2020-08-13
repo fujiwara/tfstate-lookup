@@ -26,6 +26,7 @@ var TestNames = []string{
 	`module.logs.aws_cloudwatch_log_group.main["web"]`,
 	`aws_iam_role_policy_attachment.ec2[0]`,
 	`aws_iam_role_policy_attachment.ec2[1]`,
+	`module.webapp.module.ecs_task_roles.aws_iam_role.task_execution_role`,
 }
 
 var TestSuitesOK = []TestSuite{
@@ -95,6 +96,18 @@ var TestSuitesOK = []TestSuite{
 	},
 	TestSuite{
 		Key:    `output.baz.value`,
+		Result: nil,
+	},
+	TestSuite{
+		Key:    "module.webapp.module.ecs_task_roles.aws_iam_role.task_execution_role.name",
+		Result: "task-execution-role",
+	},
+	TestSuite{
+		Key:    "module.webapp.xxxx.ecs_task_roles.aws_iam_role.task_execution_role",
+		Result: nil,
+	},
+	TestSuite{
+		Key:    "xxxx.webapp.module.ecs_task_roles.aws_iam_role.task_execution_role",
 		Result: nil,
 	},
 }
