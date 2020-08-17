@@ -217,8 +217,13 @@ func parseAddress(key string) (selectorFunc, string, error) {
 
 	var module string
 	if parts[0] == "module" {
-		module = "module." + parts[1]
-		parts = parts[2:] // remove module prefix
+		for i := len(parts) - 1; i >= 0; i-- {
+			if parts[i] == "module" {
+				module = strings.Join(parts[0:i+2], ".")
+				parts = parts[i+2:] // remove module prefix
+				break
+			}
+		}
 	}
 	if parts[0] == "data" {
 		selector = func(r resource) *instance {
