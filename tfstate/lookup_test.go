@@ -18,8 +18,8 @@ func init() {
 }
 
 var TestNames = []string{
-	`output.foo`,
 	`output.bar`,
+	`output.foo`,
 	`data.aws_caller_identity.current`,
 	`aws_acm_certificate.main`,
 	`module.logs.aws_cloudwatch_log_group.main["app"]`,

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/itchyny/gojq"
@@ -179,6 +180,7 @@ func (s *TFState) List() ([]string, error) {
 	for key := range s.state.Outputs {
 		names = append(names, "output."+key)
 	}
+	sort.Strings(names)
 	for _, r := range s.state.Resources {
 		var module string
 		if r.Module != "" {
