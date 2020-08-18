@@ -18,13 +18,11 @@ func TestMustFuncMap(t *testing.T) {
 	if attr := fn("module.logs.aws_cloudwatch_log_group.main['app'].retention_in_days"); attr != "30" {
 		t.Errorf("unexpected retention_in_days: %s", attr)
 	}
-	func() {
-		defer func() {
-			err := recover()
-			if err == nil {
-				t.Error("must be panic")
-			}
-		}()
-		fn("data.aws_caller_identity.current.xxx")
+	defer func() {
+		err := recover()
+		if err == nil {
+			t.Error("must be panic")
+		}
 	}()
+	fn("data.aws_caller_identity.current.xxx")
 }
