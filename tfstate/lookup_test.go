@@ -27,6 +27,8 @@ var TestNames = []string{
 	`aws_iam_role_policy_attachment.ec2[0]`,
 	`aws_iam_role_policy_attachment.ec2[1]`,
 	`module.webapp.module.ecs_task_roles.aws_iam_role.task_execution_role`,
+	`module.subnets.aws_subnet.main[0]`,
+	`module.subnets.aws_subnet.main[1]`,
 }
 
 var TestSuitesOK = []TestSuite{
@@ -109,6 +111,14 @@ var TestSuitesOK = []TestSuite{
 	TestSuite{
 		Key:    "xxxx.webapp.module.ecs_task_roles.aws_iam_role.task_execution_role",
 		Result: nil,
+	},
+	TestSuite{
+		Key:    "module.subnets.aws_subnet.main[0].cidr_block",
+		Result: "10.11.12.0/22",
+	},
+	TestSuite{
+		Key:    "module.subnets.aws_subnet.main[1].cidr_block",
+		Result: "10.11.15.0/22",
 	},
 }
 
