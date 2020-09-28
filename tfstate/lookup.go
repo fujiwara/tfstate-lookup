@@ -190,7 +190,7 @@ func (s *TFState) List() ([]string, error) {
 		case "data":
 			names = append(names, module+fmt.Sprintf("data.%s.%s", r.Type, r.Name))
 		case "managed":
-			if r.Each != "" {
+			if r.Each == "map" || r.Each == "list" || (r.Each == "" && len(r.Instances) > 1) {
 				for _, i := range r.Instances {
 					names = append(names,
 						module+fmt.Sprintf("%s.%s[%s]", r.Type, r.Name, string(i.IndexKey)),
@@ -237,12 +237,11 @@ func parseAddress(key string) (selectorFunc, string, error) {
 		query = "." + strings.Join(parts[3:], ".")
 	} else {
 		n := parts[1] // foo, foo["bar"], foo[0]
-
 		if i := strings.Index(n, "["); i != -1 { // each
 			indexKey := n[i+1 : len(n)-1] // "bar", 0
 			name := n[0:i]                // foo
 			selector = func(r resource) *instance {
-				if r.Module == module && r.Mode == "managed" && r.Type == parts[0] && r.Name == name && (r.Each == "map" || r.Each == "list") {
+				if r.Module == module && r.Mode == "managed" && r.Type == parts[0] && r.Name == name && (r.Each == "map" || r.Each == "list" || r.Each == "") {
 					for _, i := range r.Instances {
 						if bytes.Equal(i.IndexKey, []byte(indexKey)) {
 							instance := i
