@@ -210,7 +210,7 @@ func parseAddress(key string) (selectorFunc, string, error) {
 	var selector selectorFunc
 	var query string
 
-	parts := strings.Split(key, ".")
+	parts := makeParts(key)
 	if len(parts) < 2 ||
 		parts[0] == "module" && len(parts) < 4 ||
 		parts[0] == "data" && len(parts) < 3 {
@@ -271,4 +271,28 @@ func noneNil(args ...interface{}) interface{} {
 		}
 	}
 	return nil
+}
+
+func makeParts(key string) []string {
+	var parts []string
+	index := 0
+	inBrackets := false
+	for _, s := range strings.Split(key, "") {
+		if len(parts) < index+1 {
+			parts = append(parts, "")
+		}
+		if s == "[" {
+			inBrackets = true
+		}
+		if s == "]" {
+			inBrackets = false
+		}
+		if s != "." || inBrackets {
+			parts[index] += s
+		}
+		if s == "." && !inBrackets {
+			index++
+		}
+	}
+	return parts
 }

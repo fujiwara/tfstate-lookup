@@ -29,6 +29,8 @@ var TestNames = []string{
 	`module.webapp.module.ecs_task_roles.aws_iam_role.task_execution_role`,
 	`module.subnets.aws_subnet.main[0]`,
 	`module.subnets.aws_subnet.main[1]`,
+	`aws_iam_user.users["foo.bar"]`,
+	`aws_iam_user.users["hoge.fuga"]`,
 }
 
 var TestSuitesOK = []TestSuite{
@@ -119,6 +121,14 @@ var TestSuitesOK = []TestSuite{
 	TestSuite{
 		Key:    "module.subnets.aws_subnet.main[1].cidr_block",
 		Result: "10.11.15.0/22",
+	},
+	TestSuite{
+		Key:    `aws_iam_user.users["foo.bar"].name`,
+		Result: "foo.bar",
+	},
+	TestSuite{
+		Key:    `aws_iam_user.users["hoge.fuga"].name`,
+		Result: "hoge.fuga",
 	},
 }
 
