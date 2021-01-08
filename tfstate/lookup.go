@@ -136,7 +136,7 @@ func ReadFile(file string) (*TFState, error) {
 
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to read tfstate from %s", file)
 	}
 	defer f.Close()
 	return ReadWithWorkspace(f, string(ws))
@@ -164,7 +164,7 @@ func ReadURL(loc string) (*TFState, error) {
 		err = errors.Errorf("URL scheme %s is not supported", u.Scheme)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to read tfstate from %s", u.String())
 	}
 	defer src.Close()
 	return Read(src)
