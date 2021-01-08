@@ -13,15 +13,15 @@ const (
 )
 
 // FuncMap provides a tamplate.FuncMap tfstate based on URL and provide
-func FuncMap(stateFile string) (template.FuncMap, error) {
-	return FuncMapWithName(defaultFuncName, stateFile)
+func FuncMap(stateLoc string) (template.FuncMap, error) {
+	return FuncMapWithName(defaultFuncName, stateLoc)
 }
 
 // FuncMapWithName provides a tamplate.FuncMap. can lockup values from tfstate.
-func FuncMapWithName(name string, stateFile string) (template.FuncMap, error) {
-	state, err := ReadFile(stateFile)
+func FuncMapWithName(name string, stateLoc string) (template.FuncMap, error) {
+	state, err := ReadURL(stateLoc)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateFile)
+		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateLoc)
 	}
 	return template.FuncMap{
 		name: func(addrs string) string {
@@ -41,13 +41,13 @@ func FuncMapWithName(name string, stateFile string) (template.FuncMap, error) {
 }
 
 // MustFuncMap is similar to FuncMap, but panics if it cannot get and parse tfstate.
-func MustFuncMap(stateFile string) template.FuncMap {
-	return MustFuncMapWithName(defaultFuncName, stateFile)
+func MustFuncMap(stateLoc string) template.FuncMap {
+	return MustFuncMapWithName(defaultFuncName, stateLoc)
 }
 
 // MustFuncMapWithName is similar to FuncMapWithName, but panics if it cannot get and parse tfstate.
-func MustFuncMapWithName(name string, stateFile string) template.FuncMap {
-	funcMap, err := FuncMapWithName(name, stateFile)
+func MustFuncMapWithName(name string, stateLoc string) template.FuncMap {
+	funcMap, err := FuncMapWithName(name, stateLoc)
 	if err != nil {
 		panic(err)
 	}
