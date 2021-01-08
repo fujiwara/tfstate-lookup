@@ -17,10 +17,12 @@ $ brew install tfstate-lookup
 ```
 Usage of tfstate-lookup:
   -s string
-    	tfstate file path (default "terraform.tfstate")
+        tfstate file path or URL (default "terraform.tfstate")
   -state string
-    	tfstate file path (default "terraform.tfstate")
+        tfstate file path or URL (default "terraform.tfstate")
 ```
+
+Supported URL schemes are http(s), s3 or file.
 
 ```console
 $ tfstate-lookup -s .terraform/terraform.tfstate aws_vpc.main.id

@@ -26,7 +26,7 @@ func main() {
 
 func _main() error {
 	var (
-		stateFile        string
+		stateLoc         string
 		defaultStateFile = DefaultStateFiles[0]
 	)
 	for _, name := range DefaultStateFiles {
@@ -36,22 +36,22 @@ func _main() error {
 		}
 	}
 
-	flag.StringVar(&stateFile, "state", defaultStateFile, "tfstate file path")
-	flag.StringVar(&stateFile, "s", defaultStateFile, "tfstate file path")
+	flag.StringVar(&stateLoc, "state", defaultStateFile, "tfstate file path or URL")
+	flag.StringVar(&stateLoc, "s", defaultStateFile, "tfstate file path or URL")
 	flag.Parse()
 
-	s, err := tfstate.ReadFile(stateFile)
+	state, err := tfstate.ReadURL(stateLoc)
 	if err != nil {
 		return err
 	}
 	if len(flag.Args()) == 0 {
-		names, err := s.List()
+		names, err := state.List()
 		if err != nil {
 			return err
 		}
 		fmt.Println(strings.Join(names, "\n"))
 	} else {
-		res, err := s.Lookup(flag.Arg(0))
+		res, err := state.Lookup(flag.Arg(0))
 		if err != nil {
 			return err
 		}

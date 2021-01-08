@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -135,10 +136,38 @@ func ReadFile(file string) (*TFState, error) {
 
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to read tfstate from %s", file)
 	}
 	defer f.Close()
 	return ReadWithWorkspace(f, string(ws))
+}
+
+// ReadURL reads terraform.tfstate from the URL.
+func ReadURL(loc string) (*TFState, error) {
+	u, err := url.Parse(loc)
+	if err != nil {
+		return nil, err
+	}
+
+	var src io.ReadCloser
+	switch u.Scheme {
+	case "http", "https":
+		src, err = readHTTP(u.String())
+	case "s3":
+		key := strings.TrimPrefix(u.Path, "/")
+		src, err = readS3(os.Getenv("AWS_REGION"), u.Host, key)
+	case "file":
+		src, err = os.Open(u.Path)
+	case "":
+		return ReadFile(u.Path)
+	default:
+		err = errors.Errorf("URL scheme %s is not supported", u.Scheme)
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read tfstate from %s", u.String())
+	}
+	defer src.Close()
+	return Read(src)
 }
 
 func (s *TFState) output(key string) (*Object, error) {
@@ -236,7 +265,7 @@ func parseAddress(key string) (selectorFunc, string, error) {
 		}
 		query = "." + strings.Join(parts[3:], ".")
 	} else {
-		n := parts[1] // foo, foo["bar"], foo[0]
+		n := parts[1]                            // foo, foo["bar"], foo[0]
 		if i := strings.Index(n, "["); i != -1 { // each
 			indexKey := n[i+1 : len(n)-1] // "bar", 0
 			name := n[0:i]                // foo
