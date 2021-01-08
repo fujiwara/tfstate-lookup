@@ -76,6 +76,10 @@ func main() {
 }
 ```
 
+```go
+    state, _ := tfstate.ReadURL("s3://mybucket/terraform.tfstate")
+```
+
 ## LICENSE
 
 [Mozilla Public License Version 2.0](LICENSE)
