@@ -4,20 +4,23 @@ before:
   hooks:
     - go mod download
 builds:
-- env:
-  - CGO_ENABLED=0
-  main: ./cmd/tfstate-lookup/main.go
-  goarch:
-  - darwin
-  - amd64
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/tfstate-lookup/main.go
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
 archives:
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
+      - "^docs:"
+      - "^test:"
