@@ -172,24 +172,8 @@ func ReadURL(loc string) (*TFState, error) {
 	return Read(src)
 }
 
-func (s *TFState) output(key string) (*Object, error) {
-	parts := strings.SplitN(key, ".", 3)
-	var query string
-	name := parts[1]
-	if len(parts) == 3 {
-		query = "." + parts[2]
-	} else {
-		query = "."
-	}
-	attr := &Object{s.state.Outputs[name]}
-	return attr.Query(query)
-}
-
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
-	if strings.HasPrefix(key, "output.") {
-		return s.output(key)
-	}
 	s.once.Do(s.scan)
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
