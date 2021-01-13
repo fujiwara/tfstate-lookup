@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
@@ -34,6 +35,9 @@ var TestNames = []string{
 	`module.subnets.aws_subnet.main[1]`,
 	`aws_iam_user.users["foo.bar"]`,
 	`aws_iam_user.users["hoge.fuga"]`,
+	`data.aws_lb_target_group.app["dev1"]`,
+	`data.aws_lb_target_group.app["dev2"]`,
+	`data.aws_lb_target_group.app["dev3"]`,
 }
 
 var TestSuitesOK = []TestSuite{
@@ -133,6 +137,10 @@ var TestSuitesOK = []TestSuite{
 		Key:    `aws_iam_user.users["hoge.fuga"].name`,
 		Result: "hoge.fuga",
 	},
+	{
+		Key:    `data.aws_lb_target_group.app["dev1"].name`,
+		Result: "dev-dev1-app",
+	},
 }
 
 func testLookupState(t *testing.T, state *tfstate.TFState) {
@@ -194,6 +202,8 @@ func TestList(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	sort.Strings(names)
+	sort.Strings(TestNames)
 	if diff := cmp.Diff(names, TestNames); diff != "" {
 		t.Errorf("unexpected list names %s", diff)
 	}
