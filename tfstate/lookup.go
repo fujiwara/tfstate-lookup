@@ -178,8 +178,10 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
 			query := strings.TrimPrefix(key, name)
-			attr := &Object{noneNil(ins.Attributes, ins.AttributesFlat)}
-			return attr.Query(query)
+			if strings.HasPrefix(query, ".") || query == "" {
+				attr := &Object{noneNil(ins.Attributes, ins.AttributesFlat)}
+				return attr.Query(query)
+			}
 		}
 	}
 

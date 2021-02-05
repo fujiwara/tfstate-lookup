@@ -54,6 +54,10 @@ var TestSuitesOK = []TestSuite{
 		Result: "DNS",
 	},
 	{
+		Key:    "aws_acm_certificate.main2",
+		Result: nil,
+	},
+	{
 		Key:    "aws_acm_certificate.main.validation_method_xxx",
 		Result: nil,
 	},
