@@ -221,8 +221,10 @@ func (s *TFState) scan() {
 				}
 			} else {
 				key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
-				ins := r.Instances[0]
-				s.scanned[key] = ins
+				if len(r.Instances) != 0 {
+					ins := r.Instances[0]
+					s.scanned[key] = ins
+				}
 			}
 		}
 	}

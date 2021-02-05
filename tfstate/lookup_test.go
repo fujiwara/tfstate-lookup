@@ -141,6 +141,10 @@ var TestSuitesOK = []TestSuite{
 		Key:    `data.aws_lb_target_group.app["dev1"].name`,
 		Result: "dev-dev1-app",
 	},
+	{
+		Key:    `module.example.aws_vpc.example`,
+		Result: nil,
+	},
 }
 
 func testLookupState(t *testing.T, state *tfstate.TFState) {
