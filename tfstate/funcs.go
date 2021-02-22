@@ -23,19 +23,24 @@ func FuncMapWithName(name string, stateLoc string) (template.FuncMap, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateLoc)
 	}
+	nameFunc := func(addrs string) string {
+		if strings.Contains(addrs, "'") {
+			addrs = strings.ReplaceAll(addrs, "'", "\"")
+		}
+		attrs, err := state.Lookup(addrs)
+		if err != nil {
+			panic(fmt.Sprintf("failed to lookup %s in tfstate: %s", addrs, err))
+		}
+		if attrs.Value == nil {
+			panic(fmt.Sprintf("%s is not found in tfstate", addrs))
+		}
+		return attrs.String()
+	}
 	return template.FuncMap{
-		name: func(addrs string) string {
-			if strings.Contains(addrs, "'") {
-				addrs = strings.ReplaceAll(addrs, "'", "\"")
-			}
-			attrs, err := state.Lookup(addrs)
-			if err != nil {
-				panic(fmt.Sprintf("failed to lookup %s in tfstate: %s", addrs, err))
-			}
-			if attrs.Value == nil {
-				panic(fmt.Sprintf("%s is not found in tfstate", addrs))
-			}
-			return attrs.String()
+		name: nameFunc,
+		name + "f": func(format string, args ...interface{}) string {
+			addr := fmt.Sprintf(format, args...)
+			return nameFunc(addr)
 		},
 	}, nil
 }
