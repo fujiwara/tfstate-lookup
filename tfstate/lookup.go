@@ -157,7 +157,7 @@ func ReadURL(loc string) (*TFState, error) {
 		src, err = readHTTP(u.String())
 	case "s3":
 		key := strings.TrimPrefix(u.Path, "/")
-		src, err = readS3(os.Getenv("AWS_REGION"), u.Host, key)
+		src, err = readS3("", u.Host, key)
 	case "file":
 		src, err = os.Open(u.Path)
 	case "":

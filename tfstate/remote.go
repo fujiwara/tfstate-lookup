@@ -1,6 +1,7 @@
 package tfstate
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 func readRemoteState(b *backend, ws string) (io.ReadCloser, error) {
@@ -43,6 +45,18 @@ func readS3State(config map[string]interface{}, ws string) (io.ReadCloser, error
 }
 
 func readS3(region, bucket, key string) (io.ReadCloser, error) {
+	var err error
+	if region == "" {
+		region, err = s3manager.GetBucketRegion(
+			context.Background(),
+			session.Must(session.NewSession()),
+			bucket,
+			"",
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
 	sess, err := session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
 			Region: aws.String(region),
