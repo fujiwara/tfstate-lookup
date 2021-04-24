@@ -22,7 +22,7 @@ Usage of tfstate-lookup:
         tfstate file path or URL (default "terraform.tfstate")
 ```
 
-Supported URL schemes are http(s), s3 or file.
+Supported URL schemes are http(s), s3, gs or file.
 
 ```console
 $ tfstate-lookup -s .terraform/terraform.tfstate aws_vpc.main.id
@@ -53,7 +53,7 @@ $ tfstate-lookup aws_vpc.main
 }
 ```
 
-A remote state is supported only S3 backend currently.
+A remote state is supported only S3 and GCS backend currently.
 
 ## Usage (Go package)
 
