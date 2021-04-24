@@ -3,7 +3,6 @@ package tfstate
 import (
 	"context"
 	"io"
-	"net/http"
 	"path"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -56,12 +55,4 @@ func readS3(region, bucket, key string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return result.Body, nil
-}
-
-func readHTTP(u string) (io.ReadCloser, error) {
-	resp, err := http.Get(u)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Body, nil
 }
