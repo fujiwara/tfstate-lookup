@@ -158,6 +158,9 @@ func ReadURL(loc string) (*TFState, error) {
 	case "s3":
 		key := strings.TrimPrefix(u.Path, "/")
 		src, err = readS3("", u.Host, key)
+	case "gs":
+		key := strings.TrimPrefix(u.Path, "/")
+		src, err = readGCS(u.Host, key, "")
 	case "file":
 		src, err = os.Open(u.Path)
 	case "":
