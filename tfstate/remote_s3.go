@@ -6,13 +6,15 @@ import (
 	"path"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 func readS3State(config map[string]interface{}, ws string) (io.ReadCloser, error) {
-	region, bucket, key := *strp(config["region"]), *strp(config["bucket"]), *strp(config["key"])
+	role, region, bucket, key := *strpe(config["role_arn"]), *strpe(config["region"]), *strpe(config["bucket"]), *strpe(config["key"])
 	if ws != defaultWorkspace {
 		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
 			key = path.Join(*prefix, ws, key)
@@ -20,10 +22,10 @@ func readS3State(config map[string]interface{}, ws string) (io.ReadCloser, error
 			key = path.Join(defaultWorkspeceKeyPrefix, ws, key)
 		}
 	}
-	return readS3(region, bucket, key)
+	return readS3(role, region, bucket, key)
 }
 
-func readS3(region, bucket, key string) (io.ReadCloser, error) {
+func readS3(role, region, bucket, key string) (io.ReadCloser, error) {
 	var err error
 	if region == "" {
 		region, err = s3manager.GetBucketRegion(
@@ -45,7 +47,16 @@ func readS3(region, bucket, key string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	svc := s3.New(sess)
+	cfg := &aws.Config{}
+	if role != "" {
+		arn, err := arn.Parse(role)
+		if err != nil {
+			return nil, err
+		}
+		creds := stscreds.NewCredentials(sess, arn.String())
+		cfg.Credentials = creds
+	}
+	svc := s3.New(sess, cfg)
 
 	result, err := svc.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
