@@ -7,7 +7,7 @@ Lookup resource attributes in tfstate.
 ### homebrew (mac os only)
 
 ```
-$ brew install tfstate-lookup
+$ brew install fujiwara/tap/tfstate-lookup
 ```
 
 ### [Binary releases](https://github.com/fujiwara/tfstate-lookup/releases)
