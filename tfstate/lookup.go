@@ -80,6 +80,15 @@ type tfstate struct {
 	Lineage          string                 `json:"lineage"`
 }
 
+func outputValue(v interface{}) interface{} {
+	if mv, ok := v.(map[string]interface{}); ok {
+		if mv["value"] != nil && mv["type"] != nil {
+			return mv["value"]
+		}
+	}
+	return v
+}
+
 type backend struct {
 	Type   string `json:"type"`
 	Config map[string]interface{}
@@ -101,6 +110,8 @@ type instance struct {
 	Attributes     interface{}     `json:"attributes"`
 	AttributesFlat interface{}     `json:"attributes_flat"`
 	Private        string          `json:"private"`
+
+	data interface{}
 }
 
 // Read reads a tfstate from io.Reader
@@ -181,8 +192,11 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
 			query := strings.TrimPrefix(key, name)
+			if strings.HasPrefix(query, "[") { // e.g. output.foo[0]
+				query = "." + query
+			}
 			if strings.HasPrefix(query, ".") || query == "" {
-				attr := &Object{noneNil(ins.Attributes, ins.AttributesFlat)}
+				attr := &Object{noneNil(ins.data, ins.Attributes, ins.AttributesFlat)}
 				return attr.Query(query)
 			}
 		}
@@ -205,7 +219,7 @@ func (s *TFState) List() ([]string, error) {
 func (s *TFState) scan() {
 	s.scanned = make(map[string]instance, len(s.state.Resources))
 	for key, value := range s.state.Outputs {
-		s.scanned["output."+key] = instance{Attributes: value}
+		s.scanned["output."+key] = instance{data: outputValue(value)}
 	}
 	for _, r := range s.state.Resources {
 		var module string
@@ -218,7 +232,16 @@ func (s *TFState) scan() {
 			if r.Mode == "data" {
 				prefix = "data."
 			}
-			if r.Each == "map" || r.Each == "list" || (r.Each == "" && len(r.Instances) > 1) {
+			if r.Mode == "data" && r.Type == "terraform_remote_state" {
+				if a, ok := r.Instances[0].Attributes.(map[string]interface{}); ok {
+					data := make(map[string]interface{}, len(a))
+					for k, v := range a {
+						data[k] = outputValue(v)
+					}
+					key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
+					s.scanned[key] = instance{data: data}
+				}
+			} else if r.Each == "map" || r.Each == "list" || (r.Each == "" && len(r.Instances) > 1) {
 				for _, i := range r.Instances {
 					ins := i
 					key := module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))

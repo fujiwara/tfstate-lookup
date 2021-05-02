@@ -38,6 +38,7 @@ var TestNames = []string{
 	`data.aws_lb_target_group.app["dev1"]`,
 	`data.aws_lb_target_group.app["dev2"]`,
 	`data.aws_lb_target_group.app["dev3"]`,
+	`data.terraform_remote_state.remote`,
 }
 
 var TestSuitesOK = []TestSuite{
@@ -102,15 +103,15 @@ var TestSuitesOK = []TestSuite{
 		Result: nil,
 	},
 	{
-		Key:    `output.foo.value`,
+		Key:    `output.foo`,
 		Result: "FOO",
 	},
 	{
-		Key:    `output.bar.value[0]`,
-		Result: "A",
+		Key:    `output.bar[1]`,
+		Result: "B",
 	},
 	{
-		Key:    `output.baz.value`,
+		Key:    `output.baz`,
 		Result: nil,
 	},
 	{
@@ -148,6 +149,18 @@ var TestSuitesOK = []TestSuite{
 	{
 		Key:    `module.example.aws_vpc.example`,
 		Result: nil,
+	},
+	{
+		Key:    `data.terraform_remote_state.remote.outputs.kms_key.arn`,
+		Result: `arn:aws:kms:ap-northeast-1:123456789012:key/500193e3-ddd9-4581-ab0c-fd7aeaedf3e1`,
+	},
+	{
+		Key:    `data.terraform_remote_state.remote.outputs.kms_key_arn`,
+		Result: `arn:aws:kms:ap-northeast-1:123456789012:key/500193e3-ddd9-4581-ab0c-fd7aeaedf3e1`,
+	},
+	{
+		Key:    `data.terraform_remote_state.remote.outputs.mylist[1]`,
+		Result: float64(2),
 	},
 }
 
