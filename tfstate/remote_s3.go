@@ -37,12 +37,7 @@ func readS3State(config map[string]interface{}, ws string) (io.ReadCloser, error
 func readS3(bucket, key string, opt s3Option) (io.ReadCloser, error) {
 	var err error
 	if opt.region == "" {
-		opt.region, err = s3manager.GetBucketRegion(
-			context.Background(),
-			session.Must(session.NewSession()),
-			bucket,
-			"",
-		)
+		opt.region, err = getBucketRegion(bucket)
 		if err != nil {
 			return nil, err
 		}
@@ -75,4 +70,13 @@ func readS3(bucket, key string, opt s3Option) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return result.Body, nil
+}
+
+func getBucketRegion(bucket string) (string, error) {
+	return s3manager.GetBucketRegion(
+		context.Background(),
+		session.Must(session.NewSession()),
+		bucket,
+		"us-east-1",
+	)
 }
