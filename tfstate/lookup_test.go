@@ -33,6 +33,7 @@ var TestNames = []string{
 	`module.webapp.module.ecs_task_roles.aws_iam_role.task_execution_role`,
 	`module.subnets.aws_subnet.main[0]`,
 	`module.subnets.aws_subnet.main[1]`,
+	`aws_iam_user.user["me"]`,
 	`aws_iam_user.users["foo.bar"]`,
 	`aws_iam_user.users["hoge.fuga"]`,
 	`data.aws_lb_target_group.app["dev1"]`,
@@ -161,6 +162,10 @@ var TestSuitesOK = []TestSuite{
 	{
 		Key:    `data.terraform_remote_state.remote.outputs.mylist[1]`,
 		Result: float64(2),
+	},
+	{
+		Key:    `aws_iam_user.user["me"]`,
+		Result: `"arn:aws:iam::xxxxxxxxxxxx:user/me"`,
 	},
 }
 
