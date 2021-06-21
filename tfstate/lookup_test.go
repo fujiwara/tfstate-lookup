@@ -164,8 +164,8 @@ var TestSuitesOK = []TestSuite{
 		Result: float64(2),
 	},
 	{
-		Key:    `aws_iam_user.user["me"]`,
-		Result: `"arn:aws:iam::xxxxxxxxxxxx:user/me"`,
+		Key:    `aws_iam_user.user["me"].arn`,
+		Result: `arn:aws:iam::xxxxxxxxxxxx:user/me`,
 	},
 }
 
