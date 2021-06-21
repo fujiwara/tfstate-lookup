@@ -241,7 +241,7 @@ func (s *TFState) scan() {
 					key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
 					s.scanned[key] = instance{data: data}
 				}
-			} else if r.Each == "map" || r.Each == "list" || (r.Each == "" && len(r.Instances) > 1) {
+			} else if len(r.Instances) > 0 && len(r.Instances[0].IndexKey) > 0 {
 				for _, i := range r.Instances {
 					ins := i
 					key := module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))
