@@ -197,12 +197,40 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 			}
 			if strings.HasPrefix(query, ".") || query == "" {
 				attr := &Object{noneNil(ins.data, ins.Attributes, ins.AttributesFlat)}
-				return attr.Query(query)
+				return attr.Query(quoteJQQuery(query))
 			}
 		}
 	}
 
 	return &Object{}, nil
+}
+
+// query is passed to gojq.Compile() such as `.outputs.arn`.
+// If query contains the characters other than [jq's identifier-like characters](https://stedolan.github.io/jq/manual/#ObjectIdentifier-Index:.foo,.foo.bar),
+// we must quote them like `.outputs["repository-arn"]`.
+//
+// quoteJQQuery does it.
+func quoteJQQuery(query string) string {
+	if !strings.Contains(query, "-") {
+		return query
+	}
+	parts := strings.Split(query, ".")
+	var builder strings.Builder
+	for _, part := range parts {
+		// Split(".outputs", ".") -> {"", "outputs"}
+		if part == "" {
+			continue
+		}
+		if strings.Contains(part, "-") {
+			builder.WriteString(`["`)
+			builder.WriteString(part)
+			builder.WriteString(`"]`)
+		} else {
+			builder.WriteByte('.')
+			builder.WriteString(part)
+		}
+	}
+	return builder.String()
 }
 
 // List lists resource and output names in tfstate

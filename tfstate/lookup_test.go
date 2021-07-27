@@ -40,6 +40,7 @@ var TestNames = []string{
 	`data.aws_lb_target_group.app["dev2"]`,
 	`data.aws_lb_target_group.app["dev3"]`,
 	`data.terraform_remote_state.remote`,
+	`data.terraform_remote_state.hyphenated-id`,
 }
 
 var TestSuitesOK = []TestSuite{
@@ -166,6 +167,10 @@ var TestSuitesOK = []TestSuite{
 	{
 		Key:    `aws_iam_user.user["me"].arn`,
 		Result: `arn:aws:iam::xxxxxxxxxxxx:user/me`,
+	},
+	{
+		Key:    `data.terraform_remote_state.hyphenated-id.outputs.repository-uri`,
+		Result: `123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/app`,
 	},
 }
 
