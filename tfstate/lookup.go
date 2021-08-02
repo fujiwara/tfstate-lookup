@@ -174,6 +174,9 @@ func ReadURL(loc string) (*TFState, error) {
 		src, err = readGCS(u.Host, key, "")
 	case "file":
 		src, err = os.Open(u.Path)
+	case "remote":
+		split := strings.Split(u.Path, "/")
+		src, err = readTFE(u.Host, split[1], split[2], "")
 	case "":
 		return ReadFile(u.Path)
 	default:

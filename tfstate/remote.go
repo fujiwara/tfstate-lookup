@@ -32,6 +32,8 @@ func readRemoteState(b *backend, ws string) (io.ReadCloser, error) {
 		return readGCSState(b.Config, ws)
 	case "s3":
 		return readS3State(b.Config, ws)
+	case "remote":
+		return readTFEState(b.Config, ws)
 	default:
 		return nil, fmt.Errorf("backend type %s is not supported", b.Type)
 	}
