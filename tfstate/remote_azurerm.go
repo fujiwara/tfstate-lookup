@@ -15,12 +15,12 @@ import (
 )
 
 type azureRMOption struct {
-	resourceGroupName string
-	accessKey         string
+	accessKey string
 }
 
 func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, error) {
 	accountName, containerName, key := *strp(config["storage_account_name"]), *strpe(config["container_name"]), *strpe(config["key"])
+	resourceGroupName := *strp(config["resource_group_name"])
 	if ws != defaultWorkspace {
 		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
 			key = path.Join(*prefix, ws, key)
@@ -29,20 +29,17 @@ func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, 
 		}
 	}
 	opt := azureRMOption{
-		resourceGroupName: *strp(config["resource_group_name"]),
-		accessKey:         *strpe(config["access_key"]),
+		accessKey: *strpe(config["access_key"]),
 	}
-
-	return readAzureRM(accountName, containerName, key, opt)
+	return readAzureRM(resourceGroupName, accountName, containerName, key, opt)
 }
 
-func readAzureRM(accountName string, containerName string, key string, opt azureRMOption) (io.ReadCloser, error) {
+func readAzureRM(resourceGroupName string, accountName string, containerName string, key string, opt azureRMOption) (io.ReadCloser, error) {
 	var err error
 	ctx := context.Background()
 	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", accountName, containerName))
-
 	//get blob access key
-	accountKey := getDefaultAccessKey(ctx, accountName, opt)
+	accountKey := getDefaultAccessKey(ctx, resourceGroupName, accountName)
 	if len(os.Getenv("AZURE_STORAGE_ACCESS_KEY")) == 0 && len(opt.accessKey) == 0 && len(accountKey) == 0 {
 		log.Fatal("Blob access key not found in ENV, terraform config and can't be fetched from current Azure Profile")
 	}
@@ -84,7 +81,7 @@ func getDefaultSubscription(profile cli.Profile) string {
 	}
 	return subscriptionID
 }
-func getDefaultAccessKey(ctx context.Context, accountName string, opt azureRMOption) string {
+func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string) string {
 	profilePath, err := cli.ProfilePath()
 	profile, err := cli.LoadProfile(profilePath)
 	storageAuthorizer, err := auth.NewAuthorizerFromCLI()
@@ -96,7 +93,7 @@ func getDefaultAccessKey(ctx context.Context, accountName string, opt azureRMOpt
 	client.Authorizer = storageAuthorizer
 	client.AddToUserAgent("tfstate-lookup")
 
-	accountKeys, err := client.ListKeys(ctx, opt.resourceGroupName, accountName, storage.ListKeyExpandKerb)
+	accountKeys, err := client.ListKeys(ctx, resourceGroupName, accountName, storage.ListKeyExpandKerb)
 	if err != nil {
 		log.Printf("failed to list keys: %v", err)
 		return ""
