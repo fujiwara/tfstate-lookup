@@ -173,8 +173,8 @@ func ReadURL(loc string) (*TFState, error) {
 		key := strings.TrimPrefix(u.Path, "/")
 		src, err = readGCS(u.Host, key, "")
 	case "azurerm":
-		key := strings.TrimPrefix(u.Path, "/")
-		src, err = readAzureRM(u.Host, key, "")
+		split := strings.Split(u.Path, "/")
+		src, err = readAzureRM(u.Host, split[1], split[2], azureRMOption{})
 	case "file":
 		src, err = os.Open(u.Path)
 	case "remote":
