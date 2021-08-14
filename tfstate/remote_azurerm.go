@@ -69,7 +69,12 @@ func readAzureRM(resourceGroupName string, accountName string, containerName str
 
 	return r, nil
 }
-func getDefaultSubscription(profile cli.Profile) string {
+func getDefaultSubscription() string {
+	profilePath, err := cli.ProfilePath()
+	profile, err := cli.LoadProfile(profilePath)
+	if err != nil {
+		log.Printf("Failed to load profile: %v", err)
+	}
 	subscriptionID := ""
 	if len(profile.Subscriptions) != 0 {
 		for _, x := range profile.Subscriptions {
@@ -82,13 +87,11 @@ func getDefaultSubscription(profile cli.Profile) string {
 	return subscriptionID
 }
 func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string) string {
-	profilePath, err := cli.ProfilePath()
-	profile, err := cli.LoadProfile(profilePath)
 	storageAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
 		log.Printf("Failed to authorize: %v", err)
 	}
-	subscriptionID := getDefaultSubscription(profile)
+	subscriptionID := getDefaultSubscription()
 	client := storage.NewAccountsClient(subscriptionID)
 	client.Authorizer = storageAuthorizer
 	client.AddToUserAgent("tfstate-lookup")
