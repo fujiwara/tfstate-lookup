@@ -3,15 +3,16 @@ package tfstate
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/url"
+	"os"
+	"path"
+
 	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/azure/cli"
-	"io"
-	"log"
-	"net/url"
-	"os"
-	"path"
+	"github.com/pkg/errors"
 )
 
 type azureRMOption struct {
@@ -35,71 +36,80 @@ func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, 
 }
 
 func readAzureRM(resourceGroupName string, accountName string, containerName string, key string, opt azureRMOption) (io.ReadCloser, error) {
-	var err error
 	ctx := context.Background()
-	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", accountName, containerName))
+	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", accountName, containerName))
 	//get blob access key
-	accountKey := getDefaultAccessKey(ctx, resourceGroupName, accountName)
-	if len(os.Getenv("AZURE_STORAGE_ACCESS_KEY")) == 0 && len(opt.accessKey) == 0 && len(accountKey) == 0 {
-		log.Fatal("Blob access key not found in ENV, terraform config and can't be fetched from current Azure Profile")
+	var accountKey string
+	for _, gen := range []func() (string, error){
+		func() (string, error) { return opt.accessKey, nil },
+		func() (string, error) { return os.Getenv("AZURE_STORAGE_ACCESS_KEY"), nil },
+		func() (string, error) { return getDefaultAccessKey(ctx, resourceGroupName, accountName) },
+	} {
+		key, err := gen()
+		if err != nil {
+			return nil, err
+		} else if key != "" {
+			accountKey = key
+			break
+		}
 	}
-	if len(opt.accessKey) != 0 {
-		accountKey = opt.accessKey
-	} else if len(os.Getenv("AZURE_STORAGE_ACCESS_KEY")) != 0 {
-		accountKey = os.Getenv("AZURE_STORAGE_ACCESS_KEY")
+	if accountKey == "" {
+		return nil, errors.New("Blob access key not found in ENV, terraform config and can't be fetched from current Azure Profile")
 	}
-	//Authenticate
+
+	// Authenticate
 	credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
-	//set up client
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create credential")
+	}
+
+	// set up client
 	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
-	containerURL := azblob.NewContainerURL(*URL, p)
+	containerURL := azblob.NewContainerURL(*u, p)
 	blobURL := containerURL.NewBlockBlobURL(key)
 
-	if err != nil {
-		return nil, err
-	}
-
-	//fetch data
+	// fetch data
 	response, err := blobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
 	if err != nil {
 		return nil, err
 	}
 	defer response.Response().Body.Close()
 	r := response.Body(azblob.RetryReaderOptions{MaxRetryRequests: 20})
-
 	return r, nil
 }
-func getDefaultSubscription() string {
-	profilePath, err := cli.ProfilePath()
+
+func getDefaultSubscription() (string, error) {
+	profilePath, _ := cli.ProfilePath()
 	profile, err := cli.LoadProfile(profilePath)
 	if err != nil {
-		log.Printf("Failed to load profile: %v", err)
+		return "", errors.Wrap(err, "failed to load profile")
 	}
 	subscriptionID := ""
-	if len(profile.Subscriptions) != 0 {
-		for _, x := range profile.Subscriptions {
-			if x.IsDefault != true {
-				continue
-			}
-			subscriptionID = x.ID
+	for _, x := range profile.Subscriptions {
+		if !x.IsDefault {
+			continue
 		}
+		subscriptionID = x.ID
 	}
-	return subscriptionID
+	return subscriptionID, nil
 }
-func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string) string {
+
+func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string) (string, error) {
 	storageAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
-		log.Printf("Failed to authorize: %v", err)
+		return "", errors.Wrap(err, "failed to authorize")
 	}
-	subscriptionID := getDefaultSubscription()
+	subscriptionID, err := getDefaultSubscription()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get default subscription")
+	}
 	client := storage.NewAccountsClient(subscriptionID)
 	client.Authorizer = storageAuthorizer
 	client.AddToUserAgent("tfstate-lookup")
 
 	accountKeys, err := client.ListKeys(ctx, resourceGroupName, accountName, storage.ListKeyExpandKerb)
 	if err != nil {
-		log.Printf("failed to list keys: %v", err)
-		return ""
+		return "", errors.Wrap(err, "failed to list keys")
 	}
-	return *(((*accountKeys.Keys)[0]).Value)
+	return *(((*accountKeys.Keys)[0]).Value), nil
 }
