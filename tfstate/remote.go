@@ -30,6 +30,8 @@ func readRemoteState(b *backend, ws string) (io.ReadCloser, error) {
 	switch b.Type {
 	case "gcs":
 		return readGCSState(b.Config, ws)
+	case "azurerm":
+		return readAzureRMState(b.Config, ws)
 	case "s3":
 		return readS3State(b.Config, ws)
 	case "remote":

@@ -22,7 +22,7 @@ Usage of tfstate-lookup:
         tfstate file path or URL (default "terraform.tfstate")
 ```
 
-Supported URL schemes are http(s), s3, gs, file or remote (for Terraform Cloud and Terraform Enterprise).
+Supported URL schemes are http(s), s3, gs, azurerm, file or remote (for Terraform Cloud and Terraform Enterprise).
 
 ```console
 $ tfstate-lookup -s .terraform/terraform.tfstate aws_vpc.main.id
@@ -53,7 +53,7 @@ $ tfstate-lookup aws_vpc.main
 }
 ```
 
-A remote state is supported only S3, GCS and Terraform Cloud / Terraform Enterprise backend currently.
+A remote state is supported only S3, GCS, AzureRM and Terraform Cloud / Terraform Enterprise backend currently.
 
 ## Usage (Go package)
 
@@ -79,6 +79,7 @@ func main() {
 ```go
     state, _ := tfstate.ReadURL("s3://mybucket/terraform.tfstate")
     // state, _ := tfstate.ReadURL("remote://app.terraform.io/myorg/myworkspace")
+    // state, _ := tfstate.ReadURL("azurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}")
 ```
 
 ## LICENSE
