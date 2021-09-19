@@ -14,9 +14,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Set up Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
           go-version: 1.17
+      - run: make CREDITS
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
         with:

@@ -14,6 +14,14 @@ builds:
       - amd64
       - arm64
 archives:
+  - files:
+      - LICENSE*
+      - license*
+      - README*
+      - readme*
+      - CHANGELOG*
+      - changelog*
+      - CREDITS
 checksum:
   name_template: "checksums.txt"
 snapshot:
