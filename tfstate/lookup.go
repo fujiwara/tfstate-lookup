@@ -95,13 +95,24 @@ type backend struct {
 }
 
 type resource struct {
-	Module    string     `json:"module"`
-	Mode      string     `json:"mode"`
-	Type      string     `json:"type"`
-	Name      string     `json:"name"`
-	Each      string     `json:"each"`
-	Provider  string     `json:"provider"`
-	Instances []instance `json:"instances"`
+	Module    string    `json:"module"`
+	Mode      string    `json:"mode"`
+	Type      string    `json:"type"`
+	Name      string    `json:"name"`
+	Each      string    `json:"each"`
+	Provider  string    `json:"provider"`
+	Instances instances `json:"instances"`
+}
+
+type instances []instance
+
+func (is instances) hasIndexKey() bool {
+	for _, i := range is {
+		if len(i.IndexKey) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 type instance struct {
@@ -275,9 +286,12 @@ func (s *TFState) scan() {
 					key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
 					s.scanned[key] = instance{data: data}
 				}
-			} else if len(r.Instances) > 0 && len(r.Instances[0].IndexKey) > 0 {
+			} else if len(r.Instances) > 0 && r.Instances.hasIndexKey() {
 				for _, i := range r.Instances {
 					ins := i
+					if len(ins.IndexKey) == 0 {
+						continue // may be a garbage...
+					}
 					key := module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))
 					s.scanned[key] = ins
 				}
