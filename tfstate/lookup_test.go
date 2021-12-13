@@ -77,6 +77,10 @@ var TestSuitesOK = []TestSuite{
 		Result: nil,
 	},
 	{
+		Key:    `module.logs.aws_cloudwatch_log_group.main["vanish"]`,
+		Result: nil,
+	},
+	{
 		Key:    `module.logs.aws_cloudwatch_log_group.main["app"].id`,
 		Result: "/main/app",
 	},
