@@ -106,15 +106,6 @@ type resource struct {
 
 type instances []instance
 
-func (is instances) hasIndexKey() bool {
-	for _, i := range is {
-		if len(i.IndexKey) > 0 {
-			return true
-		}
-	}
-	return false
-}
-
 type instance struct {
 	IndexKey       json.RawMessage `json:"index_key"`
 	SchemaVersion  int             `json:"schema_version"`
@@ -297,7 +288,7 @@ func (s *TFState) scan() {
 					key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
 					s.scanned[key] = instance{data: data}
 				}
-			} else if len(r.Instances) > 0 && r.Instances.hasIndexKey() {
+			} else {
 				for _, i := range r.Instances {
 					ins := i
 					var key string
@@ -306,12 +297,6 @@ func (s *TFState) scan() {
 					} else {
 						key = module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))
 					}
-					s.scanned[key] = ins
-				}
-			} else {
-				key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
-				if len(r.Instances) != 0 {
-					ins := r.Instances[0]
 					s.scanned[key] = ins
 				}
 			}
