@@ -206,17 +206,28 @@ func ReadURL(loc string) (*TFState, error) {
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
 	s.once.Do(s.scan)
+	var found instance
+	var foundName string
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
-			query := strings.TrimPrefix(key, name)
-			if strings.HasPrefix(query, "[") { // e.g. output.foo[0]
-				query = "." + query
-			}
-			if strings.HasPrefix(query, ".") || query == "" {
-				attr := &Object{noneNil(ins.data, ins.Attributes, ins.AttributesFlat)}
-				return attr.Query(quoteJQQuery(query))
+			// logest match
+			if len(foundName) < len(name) {
+				found = ins
+				foundName = name
 			}
 		}
+	}
+	if foundName == "" {
+		return &Object{}, nil
+	}
+
+	query := strings.TrimPrefix(key, foundName)
+	if strings.HasPrefix(query, "[") { // e.g. output.foo[0]
+		query = "." + query
+	}
+	if strings.HasPrefix(query, ".") || query == "" {
+		attr := &Object{noneNil(found.data, found.Attributes, found.AttributesFlat)}
+		return attr.Query(quoteJQQuery(query))
 	}
 
 	return &Object{}, nil
@@ -289,10 +300,12 @@ func (s *TFState) scan() {
 			} else if len(r.Instances) > 0 && r.Instances.hasIndexKey() {
 				for _, i := range r.Instances {
 					ins := i
+					var key string
 					if len(ins.IndexKey) == 0 {
-						continue // may be a garbage...
+						key = module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
+					} else {
+						key = module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))
 					}
-					key := module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))
 					s.scanned[key] = ins
 				}
 			} else {
