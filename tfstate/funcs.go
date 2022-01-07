@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	defaultFuncName = "tfstate"
+	defaultFuncName                = "tfstate"
+	TFSTATE_DUMMY_ON_FUNCMAP_ERROR = "TFSTATE_DUMMY_ON_FUNCMAP_ERROR"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 )
 
 func applyEnvForFuncMap() bool {
-	d := os.Getenv("TFSTATE_DUMMY_ON_FUNCMAP_ERROR")
+	d := os.Getenv(TFSTATE_DUMMY_ON_FUNCMAP_ERROR)
 	if b, err := strconv.ParseBool(d); err != nil {
 		return false
 	} else {
