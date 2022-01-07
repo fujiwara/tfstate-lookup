@@ -53,3 +53,47 @@ func TestMustFuncMapF(t *testing.T) {
 	}()
 	fn("data.aws_caller_identity.current.xxx")
 }
+
+func TestMustFuncMapDummyOnErrorNoState(t *testing.T) {
+	t.Setenv("TFSTATE_DUMMY_ON_FUNCMAP_ERROR", "true")
+	funcMap := tfstate.MustFuncMapWithName("myfunc", "./test/terraform.tfstate.notfound")
+	fn := funcMap["myfunc"].(func(string) string)
+	if fn == nil {
+		t.Error("no function")
+	}
+	if attr := fn("data.aws_caller_identity.current.account_id"); attr != "__DUMMY__" {
+		t.Errorf("unexpected account_id: %s", attr)
+	}
+	if attr := fn("module.logs.aws_cloudwatch_log_group.main['app'].retention_in_days"); attr != "__DUMMY__" {
+		t.Errorf("unexpected retention_in_days: %s", attr)
+	}
+	defer func() {
+		err := recover()
+		if err != nil {
+			t.Error("must not be panic")
+		}
+	}()
+	fn("data.aws_caller_identity.current.xxx")
+}
+
+func TestMustFuncMapDummyOnErrorNotFound(t *testing.T) {
+	t.Setenv("TFSTATE_DUMMY_ON_FUNCMAP_ERROR", "true")
+	funcMap := tfstate.MustFuncMapWithName("myfunc", "./test/terraform.tfstate")
+	fn := funcMap["myfunc"].(func(string) string)
+	if fn == nil {
+		t.Error("no function")
+	}
+	if attr := fn("data.aws_caller_identity.current.account_id_xxx"); attr != "__DUMMY__" {
+		t.Errorf("unexpected account_id: %s", attr)
+	}
+	if attr := fn("module.logs.aws_cloudwatch_log_group.main['app'].retention_in_days_xxx"); attr != "__DUMMY__" {
+		t.Errorf("unexpected retention_in_days: %s", attr)
+	}
+	defer func() {
+		err := recover()
+		if err != nil {
+			t.Error("must not be panic")
+		}
+	}()
+	fn("data.aws_caller_identity.current.xxx")
+}
