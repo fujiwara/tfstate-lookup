@@ -11,7 +11,10 @@ import (
 )
 
 func readGCSState(config map[string]interface{}, ws string) (io.ReadCloser, error) {
-	bucket, prefix, credentials, encryption_key := *strp(config["bucket"]), *strpe(config["prefix"]), *strpe(config["credentials"]), *strpe(config["encryption_key"])
+	bucket := *strp(config["bucket"])
+	prefix := *strpe(config["prefix"])
+	credentials := *strpe(config["credentials"])
+	encryption_key := *strpe(config["encryption_key"])
 
 	key := path.Join(prefix, ws+".tfstate")
 
