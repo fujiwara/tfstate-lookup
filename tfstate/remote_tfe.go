@@ -57,7 +57,7 @@ func readTFE(hostname string, organization string, ws string, token string) (io.
 	if err != nil {
 		return nil, err
 	}
-	state, err := client.StateVersions.Current(ctx, workspace.ID)
+	state, err := client.StateVersions.ReadCurrent(ctx, workspace.ID)
 	if err != nil {
 		return nil, err
 	}
