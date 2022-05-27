@@ -178,9 +178,9 @@ func ReadURL(loc string) (*TFState, error) {
 		split := strings.SplitN(u.Path, "/", 4)
 		if len(split) < 4 {
 			err = fmt.Errorf("invalid azurerm url: %s", u.String())
-		} else {
-			src, err = readAzureRM(u.Host, split[1], split[2], split[3], azureRMOption{})
+			break
 		}
+		src, err = readAzureRM(u.Host, split[1], split[2], split[3], azureRMOption{})
 	case "file":
 		src, err = os.Open(u.Path)
 	case "remote":
