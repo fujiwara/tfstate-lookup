@@ -176,7 +176,11 @@ func ReadURL(loc string) (*TFState, error) {
 		src, err = readGCS(u.Host, key, "")
 	case "azurerm":
 		split := strings.SplitN(u.Path, "/", 4)
-		src, err = readAzureRM(u.Host, split[1], split[2], split[3], azureRMOption{})
+		if len(split) < 4 {
+			err = fmt.Errorf("invalid azurerm url: %s", u.String())
+		} else {
+			src, err = readAzureRM(u.Host, split[1], split[2], split[3], azureRMOption{})
+		}
 	case "file":
 		src, err = os.Open(u.Path)
 	case "remote":
