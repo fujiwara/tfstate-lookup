@@ -16,7 +16,8 @@ import (
 )
 
 type azureRMOption struct {
-	accessKey string
+	accessKey      string
+	subscriptionID string
 }
 
 func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, error) {
@@ -30,7 +31,8 @@ func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, 
 		}
 	}
 	opt := azureRMOption{
-		accessKey: *strpe(config["access_key"]),
+		accessKey:      *strpe(config["access_key"]),
+		subscriptionID: *strpe(config["subscription_id"]),
 	}
 	return readAzureRM(resourceGroupName, accountName, containerName, key, opt)
 }
@@ -43,7 +45,7 @@ func readAzureRM(resourceGroupName string, accountName string, containerName str
 	for _, gen := range []func() (string, error){
 		func() (string, error) { return opt.accessKey, nil },
 		func() (string, error) { return os.Getenv("AZURE_STORAGE_ACCESS_KEY"), nil },
-		func() (string, error) { return getDefaultAccessKey(ctx, resourceGroupName, accountName) },
+		func() (string, error) { return getDefaultAccessKey(ctx, resourceGroupName, accountName, opt) },
 	} {
 		key, err := gen()
 		if err != nil {
@@ -94,14 +96,19 @@ func getDefaultSubscription() (string, error) {
 	return subscriptionID, nil
 }
 
-func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string) (string, error) {
+func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string, opt azureRMOption) (string, error) {
 	storageAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
 		return "", errors.Wrap(err, "failed to authorize")
 	}
-	subscriptionID, err := getDefaultSubscription()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get default subscription")
+	var subscriptionID string
+	if opt.subscriptionID != "" {
+		subscriptionID = opt.subscriptionID
+	} else {
+		subscriptionID, err = getDefaultSubscription()
+		if err != nil {
+			return "", errors.Wrap(err, "failed to get default subscription")
+		}
 	}
 	client := storage.NewAccountsClient(subscriptionID)
 	client.Authorizer = storageAuthorizer
