@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"path"
 
 	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
 	"github.com/Azure/azure-storage-blob-go/azblob"
@@ -25,9 +24,9 @@ func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, 
 	resourceGroupName := *strp(config["resource_group_name"])
 	if ws != defaultWorkspace {
 		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
-			key = path.Join(*prefix, ws, key)
+			key = key + *prefix + ws
 		} else {
-			key = path.Join(defaultWorkspeceKeyPrefix, ws, key)
+			key = key + defaultWorkspeceKeyPrefix + ws
 		}
 	}
 	opt := azureRMOption{
