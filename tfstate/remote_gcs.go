@@ -2,6 +2,7 @@ package tfstate
 
 import (
 	"context"
+	"encoding/base64"
 	"io"
 	"path"
 
@@ -10,14 +11,17 @@ import (
 )
 
 func readGCSState(config map[string]interface{}, ws string) (io.ReadCloser, error) {
-	bucket, prefix, credentials := *strp(config["bucket"]), *strpe(config["prefix"]), *strpe(config["credentials"])
+	bucket := *strp(config["bucket"])
+	prefix := *strpe(config["prefix"])
+	credentials := *strpe(config["credentials"])
+	encryption_key := *strpe(config["encryption_key"])
 
 	key := path.Join(prefix, ws+".tfstate")
 
-	return readGCS(bucket, key, credentials)
+	return readGCS(bucket, key, credentials, encryption_key)
 }
 
-func readGCS(bucket, key, credentials string) (io.ReadCloser, error) {
+func readGCS(bucket, key, credentials, encryption_key string) (io.ReadCloser, error) {
 	var err error
 
 	ctx := context.Background()
@@ -36,7 +40,15 @@ func readGCS(bucket, key, credentials string) (io.ReadCloser, error) {
 	bkt := client.Bucket(bucket)
 	obj := bkt.Object(key)
 
-	r, err := obj.NewReader(ctx)
+	var r *storage.Reader
+
+	if encryption_key != "" {
+		decodedKey, _ := base64.StdEncoding.DecodeString(encryption_key)
+		r, err = obj.Key(decodedKey).NewReader(ctx)
+	} else {
+		r, err = obj.NewReader(ctx)
+	}
+
 	if err != nil {
 		return nil, err
 	}

@@ -173,7 +173,7 @@ func ReadURL(loc string) (*TFState, error) {
 		src, err = readS3(u.Host, key, s3Option{})
 	case "gs":
 		key := strings.TrimPrefix(u.Path, "/")
-		src, err = readGCS(u.Host, key, "")
+		src, err = readGCS(u.Host, key, "", os.Getenv("GOOGLE_ENCRYPTION_KEY"))
 	case "azurerm":
 		split := strings.SplitN(u.Path, "/", 4)
 		if len(split) < 4 {
