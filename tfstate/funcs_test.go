@@ -53,3 +53,24 @@ func TestMustFuncMapF(t *testing.T) {
 	}()
 	fn("data.aws_caller_identity.current.xxx")
 }
+
+func TestMustFuncMapWithNames(t *testing.T) {
+	funcMap := tfstate.MustFuncMapWithNames("myfunc", []string{"./test/outputs-foo.tfstate", "./test/outputs-bar.tfstate"})
+	fn := funcMap["myfunc"].(func(string) string)
+	if fn == nil {
+		t.Error("no function")
+	}
+	if attr := fn("output.foo"); attr != "FOO" {
+		t.Errorf("unexpected foo: %s", attr)
+	}
+	if attr := fn("output.bar[1]"); attr != "B" {
+		t.Errorf("unexpected bar: %s", attr)
+	}
+	defer func() {
+		err := recover()
+		if err == nil {
+			t.Error("must be panic")
+		}
+	}()
+	fn("output.baz")
+}
