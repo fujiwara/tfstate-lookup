@@ -43,7 +43,7 @@ func readS3(ctx context.Context, bucket, key string, opt s3Option) (io.ReadClose
 		return nil, err
 	}
 	if opt.region == "" {
-		opt.region, err = manager.GetBucketRegion(ctx, s3.NewFromConfig(cfg), bucket)
+		opt.region, err = getBucketRegion(ctx, cfg, bucket)
 		if err != nil {
 			return nil, err
 		}
@@ -65,4 +65,8 @@ func readS3(ctx context.Context, bucket, key string, opt s3Option) (io.ReadClose
 		return nil, err
 	}
 	return result.Body, nil
+}
+
+func getBucketRegion(ctx context.Context, cfg aws.Config, bucket string) (string, error) {
+	return manager.GetBucketRegion(ctx, s3.NewFromConfig(cfg), bucket)
 }
