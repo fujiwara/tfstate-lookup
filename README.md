@@ -20,6 +20,8 @@ Usage of tfstate-lookup:
         tfstate file path or URL (default "terraform.tfstate")
   -state string
         tfstate file path or URL (default "terraform.tfstate")
+  -timeout duration
+        timeout for reading tfstate
 ```
 
 Supported URL schemes are http(s), s3, gs, azurerm, file or remote (for Terraform Cloud and Terraform Enterprise).
