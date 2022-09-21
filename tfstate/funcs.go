@@ -1,6 +1,7 @@
 package tfstate
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
@@ -13,13 +14,13 @@ const (
 )
 
 // FuncMap provides a tamplate.FuncMap tfstate based on URL and provide
-func FuncMap(stateLoc string) (template.FuncMap, error) {
-	return FuncMapWithName(defaultFuncName, stateLoc)
+func FuncMap(ctx context.Context, stateLoc string) (template.FuncMap, error) {
+	return FuncMapWithName(ctx, defaultFuncName, stateLoc)
 }
 
 // FuncMapWithName provides a tamplate.FuncMap. can lockup values from tfstate.
-func FuncMapWithName(name string, stateLoc string) (template.FuncMap, error) {
-	state, err := ReadURL(stateLoc)
+func FuncMapWithName(ctx context.Context, name string, stateLoc string) (template.FuncMap, error) {
+	state, err := ReadURL(ctx, stateLoc)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateLoc)
 	}
@@ -46,13 +47,13 @@ func FuncMapWithName(name string, stateLoc string) (template.FuncMap, error) {
 }
 
 // MustFuncMap is similar to FuncMap, but panics if it cannot get and parse tfstate.
-func MustFuncMap(stateLoc string) template.FuncMap {
-	return MustFuncMapWithName(defaultFuncName, stateLoc)
+func MustFuncMap(ctx context.Context, stateLoc string) template.FuncMap {
+	return MustFuncMapWithName(ctx, defaultFuncName, stateLoc)
 }
 
 // MustFuncMapWithName is similar to FuncMapWithName, but panics if it cannot get and parse tfstate.
-func MustFuncMapWithName(name string, stateLoc string) template.FuncMap {
-	funcMap, err := FuncMapWithName(name, stateLoc)
+func MustFuncMapWithName(ctx context.Context, name string, stateLoc string) template.FuncMap {
+	funcMap, err := FuncMapWithName(ctx, name, stateLoc)
 	if err != nil {
 		panic(err)
 	}

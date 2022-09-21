@@ -8,8 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func readTFEState(config map[string]interface{}, ws string) (io.ReadCloser, error) {
-
+func readTFEState(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
 	hostname, organization, token := *strpe(config["hostname"]), *strp(config["organization"]), *strpe(config["token"])
 
 	workspaces, ok := config["workspaces"].(map[string]interface{})
@@ -19,17 +18,17 @@ func readTFEState(config map[string]interface{}, ws string) (io.ReadCloser, erro
 
 	name, prefix := *strpe(workspaces["name"]), *strpe(workspaces["prefix"])
 	if name != "" {
-		return readTFE(hostname, organization, name, token)
+		return readTFE(ctx, hostname, organization, name, token)
 	}
 
 	if prefix != "" {
-		return readTFE(hostname, organization, prefix+ws, token)
+		return readTFE(ctx, hostname, organization, prefix+ws, token)
 	}
 
 	return nil, errors.Errorf("workspaces requires either name or prefix")
 }
 
-func readTFE(hostname string, organization string, ws string, token string) (io.ReadCloser, error) {
+func readTFE(ctx context.Context, hostname string, organization string, ws string, token string) (io.ReadCloser, error) {
 	var address string
 	address = tfe.DefaultAddress
 	if hostname != "" {
@@ -52,7 +51,6 @@ func readTFE(hostname string, organization string, ws string, token string) (io.
 		return nil, err
 	}
 
-	ctx := context.Background()
 	workspace, err := client.Workspaces.Read(ctx, organization, ws)
 	if err != nil {
 		return nil, err
@@ -62,5 +60,5 @@ func readTFE(hostname string, organization string, ws string, token string) (io.
 		return nil, err
 	}
 
-	return readHTTP(state.DownloadURL)
+	return readHTTP(ctx, state.DownloadURL)
 }

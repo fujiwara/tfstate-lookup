@@ -1,12 +1,17 @@
 package tfstate
 
 import (
+	"context"
 	"io"
 	"net/http"
 )
 
-func readHTTP(u string) (io.ReadCloser, error) {
-	resp, err := http.Get(u)
+func readHTTP(ctx context.Context, u string) (io.ReadCloser, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

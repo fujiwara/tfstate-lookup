@@ -19,7 +19,7 @@ type azureRMOption struct {
 	subscriptionID string
 }
 
-func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, error) {
+func readAzureRMState(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
 	accountName, containerName, key := *strp(config["storage_account_name"]), *strpe(config["container_name"]), *strpe(config["key"])
 	resourceGroupName := *strp(config["resource_group_name"])
 	if ws != defaultWorkspace {
@@ -33,11 +33,10 @@ func readAzureRMState(config map[string]interface{}, ws string) (io.ReadCloser, 
 		accessKey:      *strpe(config["access_key"]),
 		subscriptionID: *strpe(config["subscription_id"]),
 	}
-	return readAzureRM(resourceGroupName, accountName, containerName, key, opt)
+	return readAzureRM(ctx, resourceGroupName, accountName, containerName, key, opt)
 }
 
-func readAzureRM(resourceGroupName string, accountName string, containerName string, key string, opt azureRMOption) (io.ReadCloser, error) {
-	ctx := context.Background()
+func readAzureRM(ctx context.Context, resourceGroupName string, accountName string, containerName string, key string, opt azureRMOption) (io.ReadCloser, error) {
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", accountName, containerName))
 	//get blob access key
 	var accountKey string

@@ -4,7 +4,7 @@ Lookup resource attributes in tfstate.
 
 ## Install
 
-### homebrew (mac os only)
+### homebrew
 
 ```
 $ brew install fujiwara/tap/tfstate-lookup
@@ -20,6 +20,8 @@ Usage of tfstate-lookup:
         tfstate file path or URL (default "terraform.tfstate")
   -state string
         tfstate file path or URL (default "terraform.tfstate")
+  -timeout duration
+        timeout for reading tfstate
 ```
 
 Supported URL schemes are http(s), s3, gs, azurerm, file or remote (for Terraform Cloud and Terraform Enterprise).
@@ -57,7 +59,7 @@ A remote state is supported only S3, GCS, AzureRM and Terraform Cloud / Terrafor
 
 ## Usage (Go package)
 
-See details in [godoc](https://godoc.org/github.com/fujiwara/tfstate-lookup/tfstate).
+See details in [godoc](https://pkg.go.dev/github.com/fujiwara/tfstate-lookup/tfstate).
 
 ```go
 package main
@@ -70,14 +72,14 @@ import(
 )
 
 func main() {
-    state, _ := tfstate.ReadFile("/path/to/.terraform/terraform.tfstate")
+    state, _ := tfstate.ReadFile(ctx, "/path/to/.terraform/terraform.tfstate")
     attrs, _ := state.Lookup("aws_vpc.main.id")
     fmt.Println(attrs.String())
 }
 ```
 
 ```go
-    state, _ := tfstate.ReadURL("s3://mybucket/terraform.tfstate")
+    state, _ := tfstate.ReadURL(ctx, "s3://mybucket/terraform.tfstate")
     // state, _ := tfstate.ReadURL("remote://app.terraform.io/myorg/myworkspace")
     // state, _ := tfstate.ReadURL("azurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}")
 ```

@@ -1,6 +1,7 @@
 package tfstate_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +29,7 @@ func testLookupRoundTrip(t *testing.T, path string) error {
 	if err != nil {
 		return err
 	}
-	state, err := tfstate.Read(f)
+	state, err := tfstate.Read(context.Background(), f)
 	if err != nil {
 		return err
 	}

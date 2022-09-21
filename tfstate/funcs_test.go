@@ -1,13 +1,14 @@
 package tfstate_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
 )
 
 func TestMustFuncMap(t *testing.T) {
-	funcMap := tfstate.MustFuncMapWithName("myfunc", "./test/terraform.tfstate")
+	funcMap := tfstate.MustFuncMapWithName(context.Background(), "myfunc", "./test/terraform.tfstate")
 	fn := funcMap["myfunc"].(func(string) string)
 	if fn == nil {
 		t.Error("no function")
@@ -28,7 +29,7 @@ func TestMustFuncMap(t *testing.T) {
 }
 
 func TestMustFuncMapF(t *testing.T) {
-	funcMap := tfstate.MustFuncMapWithName("myfunc", "./test/terraform.tfstate")
+	funcMap := tfstate.MustFuncMapWithName(context.Background(), "myfunc", "./test/terraform.tfstate")
 	fn := funcMap["myfuncf"].(func(string, ...interface{}) string)
 	if fn == nil {
 		t.Error("no function")
