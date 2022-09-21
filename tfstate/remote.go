@@ -1,6 +1,7 @@
 package tfstate
 
 import (
+	"context"
 	"fmt"
 	"io"
 )
@@ -33,7 +34,7 @@ func readRemoteState(b *backend, ws string) (io.ReadCloser, error) {
 	case "azurerm":
 		return readAzureRMState(b.Config, ws)
 	case "s3":
-		return readS3State(b.Config, ws)
+		return readS3State(context.TODO(), b.Config, ws)
 	case "remote":
 		return readTFEState(b.Config, ws)
 	default:

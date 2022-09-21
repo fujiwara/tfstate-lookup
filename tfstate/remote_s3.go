@@ -5,12 +5,13 @@ import (
 	"io"
 	"path"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 type s3Option struct {
@@ -18,7 +19,7 @@ type s3Option struct {
 	role_arn string
 }
 
-func readS3State(config map[string]interface{}, ws string) (io.ReadCloser, error) {
+func readS3State(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
 	bucket, key := *strpe(config["bucket"]), *strpe(config["key"])
 	if ws != defaultWorkspace {
 		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
@@ -31,38 +32,32 @@ func readS3State(config map[string]interface{}, ws string) (io.ReadCloser, error
 		region:   *strpe(config["region"]),
 		role_arn: *strpe(config["role_arn"]),
 	}
-	return readS3(bucket, key, opt)
+	return readS3(ctx, bucket, key, opt)
 }
 
-func readS3(bucket, key string, opt s3Option) (io.ReadCloser, error) {
-	var err error
+func readS3(ctx context.Context, bucket, key string, opt s3Option) (io.ReadCloser, error) {
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(opt.region),
+	)
+	if err != nil {
+		return nil, err
+	}
 	if opt.region == "" {
-		opt.region, err = getBucketRegion(bucket)
+		opt.region, err = getBucketRegion(ctx, cfg, bucket)
 		if err != nil {
 			return nil, err
 		}
 	}
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String(opt.region),
-		},
-		SharedConfigState: session.SharedConfigEnable,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cfg := &aws.Config{}
 	if opt.role_arn != "" {
 		arn, err := arn.Parse(opt.role_arn)
 		if err != nil {
 			return nil, err
 		}
-		creds := stscreds.NewCredentials(sess, arn.String())
+		creds := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(cfg), arn.String())
 		cfg.Credentials = creds
 	}
-	svc := s3.New(sess, cfg)
-
-	result, err := svc.GetObject(&s3.GetObjectInput{
+	svc := s3.NewFromConfig(cfg)
+	result, err := svc.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
@@ -72,11 +67,6 @@ func readS3(bucket, key string, opt s3Option) (io.ReadCloser, error) {
 	return result.Body, nil
 }
 
-func getBucketRegion(bucket string) (string, error) {
-	return s3manager.GetBucketRegion(
-		context.Background(),
-		session.Must(session.NewSession()),
-		bucket,
-		"us-east-1",
-	)
+func getBucketRegion(ctx context.Context, cfg aws.Config, bucket string) (string, error) {
+	return manager.GetBucketRegion(ctx, s3.NewFromConfig(cfg), bucket)
 }
