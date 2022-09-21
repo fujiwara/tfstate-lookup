@@ -1,6 +1,7 @@
 package tfstate
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
@@ -19,7 +20,7 @@ func FuncMap(stateLoc string) (template.FuncMap, error) {
 
 // FuncMapWithName provides a tamplate.FuncMap. can lockup values from tfstate.
 func FuncMapWithName(name string, stateLoc string) (template.FuncMap, error) {
-	state, err := ReadURL(stateLoc)
+	state, err := ReadURL(context.TODO(), stateLoc)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateLoc)
 	}

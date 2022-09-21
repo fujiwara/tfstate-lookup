@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -40,7 +41,7 @@ func _main() error {
 	flag.StringVar(&stateLoc, "s", defaultStateFile, "tfstate file path or URL")
 	flag.Parse()
 
-	state, err := tfstate.ReadURL(stateLoc)
+	state, err := tfstate.ReadURL(context.TODO(), stateLoc)
 	if err != nil {
 		return err
 	}

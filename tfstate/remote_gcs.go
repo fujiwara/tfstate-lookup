@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func readGCSState(config map[string]interface{}, ws string) (io.ReadCloser, error) {
+func readGCSState(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
 	bucket := *strp(config["bucket"])
 	prefix := *strpe(config["prefix"])
 	credentials := *strpe(config["credentials"])
@@ -18,13 +18,11 @@ func readGCSState(config map[string]interface{}, ws string) (io.ReadCloser, erro
 
 	key := path.Join(prefix, ws+".tfstate")
 
-	return readGCS(bucket, key, credentials, encryption_key)
+	return readGCS(ctx, bucket, key, credentials, encryption_key)
 }
 
-func readGCS(bucket, key, credentials, encryption_key string) (io.ReadCloser, error) {
+func readGCS(ctx context.Context, bucket, key, credentials, encryption_key string) (io.ReadCloser, error) {
 	var err error
-
-	ctx := context.Background()
 
 	var client *storage.Client
 	if credentials != "" {

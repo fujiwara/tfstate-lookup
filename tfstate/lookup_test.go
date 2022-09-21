@@ -1,6 +1,7 @@
 package tfstate_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -210,7 +211,7 @@ func TestLookupFile(t *testing.T) {
 
 func TestLookupFileURL(t *testing.T) {
 	d, _ := os.Getwd()
-	state, err := tfstate.ReadURL(fmt.Sprintf("file://%s/test/terraform.tfstate", d))
+	state, err := tfstate.ReadURL(context.Background(), fmt.Sprintf("file://%s/test/terraform.tfstate", d))
 	if err != nil {
 		t.Error(err)
 	}
@@ -222,7 +223,7 @@ func TestLookupHTTPURL(t *testing.T) {
 	ts := httptest.NewServer(h)
 	defer ts.Close()
 	t.Logf("testing URL %s", ts.URL)
-	state, err := tfstate.ReadURL(ts.URL + "/test/terraform.tfstate")
+	state, err := tfstate.ReadURL(context.Background(), ts.URL+"/test/terraform.tfstate")
 	if err != nil {
 		t.Error(err)
 	}

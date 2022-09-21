@@ -28,15 +28,16 @@ func strpe(v interface{}) *string {
 }
 
 func readRemoteState(b *backend, ws string) (io.ReadCloser, error) {
+	ctx := context.TODO()
 	switch b.Type {
 	case "gcs":
-		return readGCSState(b.Config, ws)
+		return readGCSState(ctx, b.Config, ws)
 	case "azurerm":
-		return readAzureRMState(b.Config, ws)
+		return readAzureRMState(ctx, b.Config, ws)
 	case "s3":
-		return readS3State(context.TODO(), b.Config, ws)
+		return readS3State(ctx, b.Config, ws)
 	case "remote":
-		return readTFEState(b.Config, ws)
+		return readTFEState(ctx, b.Config, ws)
 	default:
 		return nil, fmt.Errorf("backend type %s is not supported", b.Type)
 	}

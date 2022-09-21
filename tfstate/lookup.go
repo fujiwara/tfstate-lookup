@@ -159,7 +159,7 @@ func ReadFile(file string) (*TFState, error) {
 }
 
 // ReadURL reads terraform.tfstate from the URL.
-func ReadURL(loc string) (*TFState, error) {
+func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 	u, err := url.Parse(loc)
 	if err != nil {
 		return nil, err
@@ -168,25 +168,25 @@ func ReadURL(loc string) (*TFState, error) {
 	var src io.ReadCloser
 	switch u.Scheme {
 	case "http", "https":
-		src, err = readHTTP(u.String())
+		src, err = readHTTP(ctx, u.String())
 	case "s3":
 		key := strings.TrimPrefix(u.Path, "/")
-		src, err = readS3(context.TODO(), u.Host, key, s3Option{})
+		src, err = readS3(ctx, u.Host, key, s3Option{})
 	case "gs":
 		key := strings.TrimPrefix(u.Path, "/")
-		src, err = readGCS(u.Host, key, "", os.Getenv("GOOGLE_ENCRYPTION_KEY"))
+		src, err = readGCS(ctx, u.Host, key, "", os.Getenv("GOOGLE_ENCRYPTION_KEY"))
 	case "azurerm":
 		split := strings.SplitN(u.Path, "/", 4)
 		if len(split) < 4 {
 			err = fmt.Errorf("invalid azurerm url: %s", u.String())
 			break
 		}
-		src, err = readAzureRM(u.Host, split[1], split[2], split[3], azureRMOption{})
+		src, err = readAzureRM(ctx, u.Host, split[1], split[2], split[3], azureRMOption{})
 	case "file":
 		src, err = os.Open(u.Path)
 	case "remote":
 		split := strings.Split(u.Path, "/")
-		src, err = readTFE(u.Host, split[1], split[2], "")
+		src, err = readTFE(ctx, u.Host, split[1], split[2], "")
 	case "":
 		return ReadFile(u.Path)
 	default:
