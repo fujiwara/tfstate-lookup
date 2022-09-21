@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -118,12 +117,12 @@ type instance struct {
 }
 
 // Read reads a tfstate from io.Reader
-func Read(src io.Reader) (*TFState, error) {
-	return ReadWithWorkspace(src, defaultWorkspace)
+func Read(ctx context.Context, src io.Reader) (*TFState, error) {
+	return ReadWithWorkspace(ctx, src, defaultWorkspace)
 }
 
 // ReadWithWorkspace reads a tfstate from io.Reader with workspace
-func ReadWithWorkspace(src io.Reader, ws string) (*TFState, error) {
+func ReadWithWorkspace(ctx context.Context, src io.Reader, ws string) (*TFState, error) {
 	if ws == "" {
 		ws = defaultWorkspace
 	}
@@ -132,12 +131,12 @@ func ReadWithWorkspace(src io.Reader, ws string) (*TFState, error) {
 		return nil, errors.Wrap(err, "invalid json")
 	}
 	if s.state.Backend != nil {
-		remote, err := readRemoteState(s.state.Backend, ws)
+		remote, err := readRemoteState(ctx, s.state.Backend, ws)
 		if err != nil {
 			return nil, err
 		}
 		defer remote.Close()
-		return Read(remote)
+		return Read(ctx, remote)
 	}
 	if s.state.Version != StateVersion {
 		return nil, errors.Errorf("unsupported state version %d", s.state.Version)
@@ -146,8 +145,8 @@ func ReadWithWorkspace(src io.Reader, ws string) (*TFState, error) {
 }
 
 // ReadFile reads terraform.tfstate from the file (a workspace reads from environment file in the same directory)
-func ReadFile(file string) (*TFState, error) {
-	ws, _ := ioutil.ReadFile(filepath.Join(filepath.Dir(file), "environment"))
+func ReadFile(ctx context.Context, file string) (*TFState, error) {
+	ws, _ := os.ReadFile(filepath.Join(filepath.Dir(file), "environment"))
 	// if not exist, don't care (using default workspace)
 
 	f, err := os.Open(file)
@@ -155,7 +154,7 @@ func ReadFile(file string) (*TFState, error) {
 		return nil, errors.Wrapf(err, "failed to read tfstate from %s", file)
 	}
 	defer f.Close()
-	return ReadWithWorkspace(f, string(ws))
+	return ReadWithWorkspace(ctx, f, string(ws))
 }
 
 // ReadURL reads terraform.tfstate from the URL.
@@ -188,7 +187,7 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 		split := strings.Split(u.Path, "/")
 		src, err = readTFE(ctx, u.Host, split[1], split[2], "")
 	case "":
-		return ReadFile(u.Path)
+		return ReadFile(ctx, u.Path)
 	default:
 		err = errors.Errorf("URL scheme %s is not supported", u.Scheme)
 	}
@@ -196,7 +195,7 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 		return nil, errors.Wrapf(err, "failed to read tfstate from %s", u.String())
 	}
 	defer src.Close()
-	return Read(src)
+	return Read(ctx, src)
 }
 
 // Lookup lookups attributes of the specified key in tfstate

@@ -27,8 +27,7 @@ func strpe(v interface{}) *string {
 	return &empty
 }
 
-func readRemoteState(b *backend, ws string) (io.ReadCloser, error) {
-	ctx := context.TODO()
+func readRemoteState(ctx context.Context, b *backend, ws string) (io.ReadCloser, error) {
 	switch b.Type {
 	case "gcs":
 		return readGCSState(ctx, b.Config, ws)

@@ -202,7 +202,7 @@ func TestLookupFile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	state, err := tfstate.Read(f)
+	state, err := tfstate.Read(context.Background(), f)
 	if err != nil {
 		t.Error(err)
 	}
@@ -235,7 +235,7 @@ func TestList(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	state, err := tfstate.Read(f)
+	state, err := tfstate.Read(context.Background(), f)
 	if err != nil {
 		t.Error(err)
 	}
