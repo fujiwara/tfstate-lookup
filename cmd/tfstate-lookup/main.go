@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
 	"github.com/mattn/go-isatty"
@@ -29,6 +30,7 @@ func _main() error {
 	var (
 		stateLoc         string
 		defaultStateFile = DefaultStateFiles[0]
+		timeout          time.Duration
 	)
 	for _, name := range DefaultStateFiles {
 		if _, err := os.Stat(name); err == nil {
@@ -39,9 +41,17 @@ func _main() error {
 
 	flag.StringVar(&stateLoc, "state", defaultStateFile, "tfstate file path or URL")
 	flag.StringVar(&stateLoc, "s", defaultStateFile, "tfstate file path or URL")
+	flag.DurationVar(&timeout, "timeout", 0, "timeout for reading tfstate")
 	flag.Parse()
 
-	state, err := tfstate.ReadURL(context.TODO(), stateLoc)
+	var ctx = context.Background()
+	var cancel context.CancelFunc
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	state, err := tfstate.ReadURL(ctx, stateLoc)
 	if err != nil {
 		return err
 	}
