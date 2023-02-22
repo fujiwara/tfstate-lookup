@@ -14,7 +14,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.33
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.11
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.19
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/go-tfe v1.2.0
 	github.com/itchyny/gojq v0.9.0
 	github.com/mattn/go-isatty v0.0.12
