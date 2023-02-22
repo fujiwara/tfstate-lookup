@@ -17,7 +17,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/go-tfe v1.2.0
 	github.com/itchyny/gojq v0.9.0
-	github.com/mattn/go-isatty v0.0.12
+	github.com/mattn/go-isatty v0.0.17
 	github.com/pkg/errors v0.9.1
 	google.golang.org/api v0.45.0
 )
@@ -73,7 +73,7 @@ require (
 	golang.org/x/mod v0.4.1 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/oauth2 v0.0.0-20210413134643-5e61552d6c78 // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	golang.org/x/tools v0.1.0 // indirect
