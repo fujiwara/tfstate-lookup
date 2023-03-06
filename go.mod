@@ -9,11 +9,11 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.6
 	github.com/aws/aws-sdk-go-v2 v1.17.5
-	github.com/aws/aws-sdk-go-v2/config v1.18.14
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.14
+	github.com/aws/aws-sdk-go-v2/config v1.18.15
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.15
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.54
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.30.4
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.4
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.5
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/go-tfe v1.2.0
 	github.com/itchyny/gojq v0.12.11
@@ -43,8 +43,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.24 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.23 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.12.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.4 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
