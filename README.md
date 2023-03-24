@@ -16,6 +16,7 @@ $ brew install fujiwara/tap/tfstate-lookup
 
 ```
 Usage of tfstate-lookup:
+  -i    interactive mode
   -s string
         tfstate file path or URL (default "terraform.tfstate")
   -state string
