@@ -17,6 +17,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/go-tfe v1.2.0
 	github.com/itchyny/gojq v0.12.11
+	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.17
 	github.com/pkg/errors v0.9.1
 	google.golang.org/api v0.45.0
@@ -61,7 +62,6 @@ require (
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
-	github.com/manifoldco/promptui v0.9.0 // indirect
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
