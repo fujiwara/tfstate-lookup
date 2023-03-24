@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
+	"github.com/manifoldco/promptui"
 	"github.com/mattn/go-isatty"
 )
 
@@ -30,6 +31,7 @@ func _main() error {
 	var (
 		stateLoc         string
 		defaultStateFile = DefaultStateFiles[0]
+		interactive      bool
 		timeout          time.Duration
 	)
 	for _, name := range DefaultStateFiles {
@@ -41,6 +43,7 @@ func _main() error {
 
 	flag.StringVar(&stateLoc, "state", defaultStateFile, "tfstate file path or URL")
 	flag.StringVar(&stateLoc, "s", defaultStateFile, "tfstate file path or URL")
+	flag.BoolVar(&interactive, "i", false, "interactive mode")
 	flag.DurationVar(&timeout, "timeout", 0, "timeout for reading tfstate")
 	flag.Parse()
 
@@ -60,22 +63,55 @@ func _main() error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(strings.Join(names, "\n"))
+		if interactive {
+			selected, err := promptForSelection(names)
+			if err != nil {
+				return err
+			}
+			obj, err := state.Lookup(selected)
+			if err != nil {
+				return err
+			}
+			printObject(obj)
+		} else {
+			fmt.Println(strings.Join(names, "\n"))
+		}
 	} else {
-		res, err := state.Lookup(flag.Arg(0))
+		obj, err := state.Lookup(flag.Arg(0))
 		if err != nil {
 			return err
 		}
-		b := res.Bytes()
-		w := os.Stdout
-		if isatty.IsTerminal(w.Fd()) && (bytes.HasPrefix(b, []byte("[")) || bytes.HasPrefix(b, []byte("{"))) {
-			var out bytes.Buffer
-			json.Indent(&out, b, "", "  ")
-			out.WriteRune('\n')
-			out.WriteTo(w)
-		} else {
-			fmt.Fprintln(w, string(b))
-		}
+		printObject(obj)
 	}
 	return nil
+}
+
+func printObject(obj *tfstate.Object) {
+	b := obj.Bytes()
+	w := os.Stdout
+	if isatty.IsTerminal(w.Fd()) && (bytes.HasPrefix(b, []byte("[")) || bytes.HasPrefix(b, []byte("{"))) {
+		var out bytes.Buffer
+		json.Indent(&out, b, "", "  ")
+		out.WriteRune('\n')
+		out.WriteTo(w)
+	} else {
+		fmt.Fprintln(w, string(b))
+	}
+}
+
+func promptForSelection(choices []string) (string, error) {
+	prompt := promptui.Select{
+		Label:             "Select an item",
+		Items:             choices,
+		StartInSearchMode: true,
+		Size:              20,
+		Searcher: func(input string, index int) bool {
+			return strings.Contains(choices[index], input)
+		},
+	}
+	_, result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
 }
