@@ -11,7 +11,6 @@ import (
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/azure/cli"
-	"github.com/pkg/errors"
 )
 
 type azureRMOption struct {
@@ -54,13 +53,13 @@ func readAzureRM(ctx context.Context, resourceGroupName string, accountName stri
 		}
 	}
 	if accountKey == "" {
-		return nil, errors.New("Blob access key not found in ENV, terraform config and can't be fetched from current Azure Profile")
+		return nil, fmt.Errorf("Blob access key not found in ENV, terraform config and can't be fetched from current Azure Profile")
 	}
 
 	// Authenticate
 	credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create credential")
+		return nil, fmt.Errorf("failed to create credential: %w", err)
 	}
 
 	// set up client
@@ -82,7 +81,7 @@ func getDefaultSubscription() (string, error) {
 	profilePath, _ := cli.ProfilePath()
 	profile, err := cli.LoadProfile(profilePath)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to load profile")
+		return "", fmt.Errorf("failed to load profile: %w", err)
 	}
 	subscriptionID := ""
 	for _, x := range profile.Subscriptions {
@@ -97,7 +96,7 @@ func getDefaultSubscription() (string, error) {
 func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string, opt azureRMOption) (string, error) {
 	storageAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to authorize")
+		return "", fmt.Errorf("failed to authorize: %w", err)
 	}
 	var subscriptionID string
 	if opt.subscriptionID != "" {
@@ -105,7 +104,7 @@ func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountN
 	} else {
 		subscriptionID, err = getDefaultSubscription()
 		if err != nil {
-			return "", errors.Wrap(err, "failed to get default subscription")
+			return "", fmt.Errorf("failed to get default subscription: %w", err)
 		}
 	}
 	client := storage.NewAccountsClient(subscriptionID)
@@ -114,7 +113,7 @@ func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountN
 
 	accountKeys, err := client.ListKeys(ctx, resourceGroupName, accountName, storage.ListKeyExpandKerb)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to list keys")
+		return "", fmt.Errorf("failed to list keys: %w", err)
 	}
 	return *(((*accountKeys.Keys)[0]).Value), nil
 }

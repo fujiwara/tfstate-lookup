@@ -2,10 +2,10 @@ package tfstate
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	tfe "github.com/hashicorp/go-tfe"
-	"github.com/pkg/errors"
 )
 
 func readTFEState(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
@@ -13,7 +13,7 @@ func readTFEState(ctx context.Context, config map[string]interface{}, ws string)
 
 	workspaces, ok := config["workspaces"].(map[string]interface{})
 	if !ok {
-		return nil, errors.Errorf("failed to parse workspaces")
+		return nil, fmt.Errorf("failed to parse workspaces")
 	}
 
 	name, prefix := *strpe(workspaces["name"]), *strpe(workspaces["prefix"])
@@ -25,7 +25,7 @@ func readTFEState(ctx context.Context, config map[string]interface{}, ws string)
 		return readTFE(ctx, hostname, organization, prefix+ws, token)
 	}
 
-	return nil, errors.Errorf("workspaces requires either name or prefix")
+	return nil, fmt.Errorf("workspaces requires either name or prefix")
 }
 
 func readTFE(ctx context.Context, hostname string, organization string, ws string, token string) (io.ReadCloser, error) {
