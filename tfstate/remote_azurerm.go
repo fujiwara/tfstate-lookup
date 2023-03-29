@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 
-	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-04-01/storage"
-	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+
 	"github.com/Azure/go-autorest/autorest/azure/cli"
+
 	"github.com/pkg/errors"
 )
 
@@ -37,7 +38,7 @@ func readAzureRMState(ctx context.Context, config map[string]interface{}, ws str
 }
 
 func readAzureRM(ctx context.Context, resourceGroupName string, accountName string, containerName string, key string, opt azureRMOption) (io.ReadCloser, error) {
-	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", accountName, containerName))
+	serviceUrl := fmt.Sprintf("https://%s.blob.core.windows.net/", accountName)
 	//get blob access key
 	var accountKey string
 	for _, gen := range []func() (string, error){
@@ -63,22 +64,25 @@ func readAzureRM(ctx context.Context, resourceGroupName string, accountName stri
 		return nil, errors.Wrap(err, "failed to create credential")
 	}
 
-	// set up client
-	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
-	containerURL := azblob.NewContainerURL(*u, p)
-	blobURL := containerURL.NewBlockBlobURL(key)
-
-	// fetch data
-	response, err := blobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false, azblob.ClientProvidedKeyOptions{})
+	client, err := azblob.NewClientWithSharedKeyCredential(serviceUrl, credential, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to setup client")
 	}
-	defer response.Response().Body.Close()
-	r := response.Body(azblob.RetryReaderOptions{MaxRetryRequests: 20})
+
+	blobDownloadResponse, err := client.DownloadStream(ctx, containerName, key, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to download blob")
+	}
+
+	r := blobDownloadResponse.Body
 	return r, nil
 }
 
 func getDefaultSubscription() (string, error) {
+	if value, ok := os.LookupEnv("AZURE_SUBSCRIPTION_ID"); ok {
+		return value, nil
+	}
+
 	profilePath, _ := cli.ProfilePath()
 	profile, err := cli.LoadProfile(profilePath)
 	if err != nil {
@@ -95,7 +99,7 @@ func getDefaultSubscription() (string, error) {
 }
 
 func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string, opt azureRMOption) (string, error) {
-	storageAuthorizer, err := auth.NewAuthorizerFromCLI()
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to authorize")
 	}
@@ -108,13 +112,12 @@ func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountN
 			return "", errors.Wrap(err, "failed to get default subscription")
 		}
 	}
-	client := storage.NewAccountsClient(subscriptionID)
-	client.Authorizer = storageAuthorizer
-	client.AddToUserAgent("tfstate-lookup")
 
-	accountKeys, err := client.ListKeys(ctx, resourceGroupName, accountName, storage.ListKeyExpandKerb)
+	clientFactory, err := armstorage.NewClientFactory(subscriptionID, cred, nil)
+	keys, err := clientFactory.NewAccountsClient().ListKeys(ctx, resourceGroupName, accountName, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to list keys")
 	}
-	return *(((*accountKeys.Keys)[0]).Value), nil
+
+	return *keys.Keys[0].Value, nil
 }
