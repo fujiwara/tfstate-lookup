@@ -83,6 +83,7 @@ func main() {
     state, _ := tfstate.ReadURL(ctx, "s3://mybucket/terraform.tfstate")
     // state, _ := tfstate.ReadURL("remote://app.terraform.io/myorg/myworkspace")
     // state, _ := tfstate.ReadURL("azurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}")
+    // state, _ := tfstate.ReadURL("azurerm://{subscription_id}@{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}")
 ```
 
 ## LICENSE

@@ -176,11 +176,13 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 		src, err = readGCS(ctx, u.Host, key, "", os.Getenv("GOOGLE_ENCRYPTION_KEY"))
 	case "azurerm":
 		split := strings.SplitN(u.Path, "/", 4)
+
 		if len(split) < 4 {
 			err = fmt.Errorf("invalid azurerm url: %s", u.String())
 			break
 		}
-		src, err = readAzureRM(ctx, u.Host, split[1], split[2], split[3], azureRMOption{})
+
+		src, err = readAzureRM(ctx, u.Host, split[1], split[2], split[3], azureRMOption{subscriptionID: u.User.Username()})
 	case "file":
 		src, err = os.Open(u.Path)
 	case "remote":
