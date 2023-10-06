@@ -187,7 +187,7 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 		src, err = os.Open(u.Path)
 	case "remote":
 		split := strings.Split(u.Path, "/")
-		src, err = readTFE(ctx, u.Host, split[1], split[2], "")
+		src, err = readTFE(ctx, u.Host, split[1], split[2], os.Getenv("TFE_TOKEN"))
 	case "":
 		return ReadFile(ctx, u.Path)
 	default:

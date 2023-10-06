@@ -3,6 +3,7 @@ package tfstate
 import (
 	"context"
 	"io"
+	"net/http"
 
 	tfe "github.com/hashicorp/go-tfe"
 	"github.com/pkg/errors"
@@ -35,18 +36,11 @@ func readTFE(ctx context.Context, hostname string, organization string, ws strin
 		address = "https://" + hostname
 	}
 
-	var err error
 	var client *tfe.Client
-	if token != "" {
-		client, err = tfe.NewClient(&tfe.Config{
-			Address: address,
-			Token:   token,
-		})
-	} else {
-		client, err = tfe.NewClient(&tfe.Config{
-			Address: address,
-		})
-	}
+	client, err := tfe.NewClient(&tfe.Config{
+		Address: address,
+		Token:   token,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +53,10 @@ func readTFE(ctx context.Context, hostname string, organization string, ws strin
 	if err != nil {
 		return nil, err
 	}
-
-	return readHTTP(ctx, state.DownloadURL)
+	req, err := http.NewRequest(http.MethodGet, state.DownloadURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", "Bearer "+token)
+	return readHTTPWithRequest(ctx, req)
 }
