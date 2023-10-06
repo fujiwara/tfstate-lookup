@@ -73,18 +73,26 @@ import(
 )
 
 func main() {
-    state, _ := tfstate.ReadFile(ctx, "/path/to/.terraform/terraform.tfstate")
+    state, _ := tfstate.ReadURL(ctx, "s3://mybucket/terraform.tfstate")
     attrs, _ := state.Lookup("aws_vpc.main.id")
     fmt.Println(attrs.String())
 }
 ```
 
 ```go
-    state, _ := tfstate.ReadURL(ctx, "s3://mybucket/terraform.tfstate")
-    // state, _ := tfstate.ReadURL("remote://app.terraform.io/myorg/myworkspace")
-    // state, _ := tfstate.ReadURL("azurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}")
-    // state, _ := tfstate.ReadURL("azurerm://{subscription_id}@{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}")
 ```
+
+## Supported tfstate URL format
+
+- Local file `file://path/to/terraform.tfstate`
+- HTTP/HTTPS `https://example.com/terraform.tfstate`
+- Amazon S3 `s3://{bucket}/{key}`
+- Terraform Cloud `remote://api.terraform.io/{organization}/{workspaces}`
+  - `TFE_TOKEN` environment variable is required.
+- Google Cloud Storage `gs://{bucket}/{key}`
+- Azure Blog Storage
+  - `azurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}`
+  - `azurerm://{subscription_id}@{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}`
 
 ## LICENSE
 
