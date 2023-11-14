@@ -44,7 +44,7 @@ func readAzureRM(ctx context.Context, resourceGroupName string, accountName stri
 	var client *azblob.Client
 
 	if opt.useAzureAdAuth == "true" || os.Getenv("ARM_USE_AZUREAD") == "true" {
-		cred, err := getDefaultClient()
+		cred, err := getDefaultAzureCredential()
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +115,7 @@ func getDefaultSubscription() (string, error) {
 }
 
 func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string, opt azureRMOption) (string, error) {
-	cred, err := getDefaultClient()
+	cred, err := getDefaultAzureCredential()
 	if err != nil {
 		return "", err
 	}
@@ -147,7 +147,7 @@ func getSubscription(opt azureRMOption) (string, error) {
 	return subscriptionID, nil
 }
 
-func getDefaultClient() (*azidentity.DefaultAzureCredential, error) {
+func getDefaultAzureCredential() (*azidentity.DefaultAzureCredential, error) {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to authorize")
