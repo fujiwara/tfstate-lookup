@@ -59,7 +59,7 @@ func readAzureRM(ctx context.Context, resourceGroupName string, accountName stri
 		for _, gen := range []func() (string, error){
 			func() (string, error) { return opt.accessKey, nil },
 			func() (string, error) { return os.Getenv("AZURE_STORAGE_ACCESS_KEY"), nil },
-			func() (string, error) { return getDefaultAccessKey(ctx, resourceGroupName, accountName, opt) },
+			func() (string, error) { return getDefaultAzureAccessKey(ctx, resourceGroupName, accountName, opt) },
 		} {
 			key, err := gen()
 			if err != nil {
@@ -94,7 +94,7 @@ func readAzureRM(ctx context.Context, resourceGroupName string, accountName stri
 	return r, nil
 }
 
-func getDefaultSubscription() (string, error) {
+func getDefaultAzureSubscription() (string, error) {
 	if value, ok := os.LookupEnv("AZURE_SUBSCRIPTION_ID"); ok {
 		return value, nil
 	}
@@ -114,18 +114,21 @@ func getDefaultSubscription() (string, error) {
 	return subscriptionID, nil
 }
 
-func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountName string, opt azureRMOption) (string, error) {
+func getDefaultAzureAccessKey(ctx context.Context, resourceGroupName string, accountName string, opt azureRMOption) (string, error) {
 	cred, err := getDefaultAzureCredential()
 	if err != nil {
 		return "", err
 	}
 
-	subscriptionID, err := getSubscription(opt)
+	subscriptionID, err := getAzureSubscription(opt)
 	if err != nil {
 		return "", err
 	}
 
 	clientFactory, err := armstorage.NewClientFactory(subscriptionID, cred, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create client factory")
+	}
 	keys, err := clientFactory.NewAccountsClient().ListKeys(ctx, resourceGroupName, accountName, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to list keys")
@@ -134,12 +137,12 @@ func getDefaultAccessKey(ctx context.Context, resourceGroupName string, accountN
 	return *keys.Keys[0].Value, nil
 }
 
-func getSubscription(opt azureRMOption) (string, error) {
+func getAzureSubscription(opt azureRMOption) (string, error) {
 	if opt.subscriptionID != "" {
 		return opt.subscriptionID, nil
 	}
 
-	subscriptionID, err := getDefaultSubscription()
+	subscriptionID, err := getDefaultAzureSubscription()
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get default subscription")
 	}
