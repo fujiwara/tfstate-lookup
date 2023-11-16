@@ -126,6 +126,9 @@ func getDefaultAzureAccessKey(ctx context.Context, resourceGroupName string, acc
 	}
 
 	clientFactory, err := armstorage.NewClientFactory(subscriptionID, cred, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create client factory")
+	}
 	keys, err := clientFactory.NewAccountsClient().ListKeys(ctx, resourceGroupName, accountName, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to list keys")
