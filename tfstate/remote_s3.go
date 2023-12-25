@@ -42,12 +42,20 @@ func readS3(ctx context.Context, bucket, key string, opt s3Option) (io.ReadClose
 	if err != nil {
 		return nil, err
 	}
-	if opt.region == "" {
-		opt.region, err = getBucketRegion(ctx, cfg, bucket)
+	region, err := getBucketRegion(ctx, cfg, bucket)
+	if err != nil {
+		return nil, err
+	}
+	if region != opt.region {
+		// reload config with bucket region
+		cfg, err = config.LoadDefaultConfig(ctx,
+			config.WithRegion(region),
+		)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	if opt.role_arn != "" {
 		arn, err := arn.Parse(opt.role_arn)
 		if err != nil {
