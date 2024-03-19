@@ -13,6 +13,7 @@ import (
 	"github.com/fujiwara/tfstate-lookup/tfstate"
 	"github.com/manifoldco/promptui"
 	"github.com/mattn/go-isatty"
+	"github.com/simeji/jid"
 )
 
 var DefaultStateFiles = []string{
@@ -32,6 +33,7 @@ func _main() error {
 		stateLoc         string
 		defaultStateFile = DefaultStateFiles[0]
 		interactive      bool
+		runJid           bool
 		timeout          time.Duration
 	)
 	for _, name := range DefaultStateFiles {
@@ -44,6 +46,7 @@ func _main() error {
 	flag.StringVar(&stateLoc, "state", defaultStateFile, "tfstate file path or URL")
 	flag.StringVar(&stateLoc, "s", defaultStateFile, "tfstate file path or URL")
 	flag.BoolVar(&interactive, "i", false, "interactive mode")
+	flag.BoolVar(&runJid, "j", false, "run jid after selecting an item")
 	flag.DurationVar(&timeout, "timeout", 0, "timeout for reading tfstate")
 	flag.Parse()
 
@@ -58,44 +61,48 @@ func _main() error {
 	if err != nil {
 		return err
 	}
-	if len(flag.Args()) == 0 {
+	var key string
+	if len(flag.Args()) > 0 {
+		key = flag.Arg(0)
+	} else {
+		// list
 		names, err := state.List()
 		if err != nil {
 			return err
 		}
-		if interactive {
-			selected, err := promptForSelection(names)
-			if err != nil {
-				return err
-			}
-			obj, err := state.Lookup(selected)
-			if err != nil {
-				return err
-			}
-			printObject(obj)
-		} else {
+		if !interactive {
 			fmt.Println(strings.Join(names, "\n"))
+			return nil
 		}
-	} else {
-		obj, err := state.Lookup(flag.Arg(0))
+		key, err = promptForSelection(names)
 		if err != nil {
 			return err
 		}
-		printObject(obj)
 	}
-	return nil
+
+	obj, err := state.Lookup(key)
+	if err != nil {
+		return err
+	}
+	if runJid {
+		return jidObject(obj)
+	} else {
+		return printObject(obj)
+	}
 }
 
-func printObject(obj *tfstate.Object) {
+func printObject(obj *tfstate.Object) error {
 	b := obj.Bytes()
 	w := os.Stdout
 	if isatty.IsTerminal(w.Fd()) && (bytes.HasPrefix(b, []byte("[")) || bytes.HasPrefix(b, []byte("{"))) {
 		var out bytes.Buffer
 		json.Indent(&out, b, "", "  ")
 		out.WriteRune('\n')
-		out.WriteTo(w)
+		_, err := out.WriteTo(w)
+		return err
 	} else {
-		fmt.Fprintln(w, string(b))
+		_, err := fmt.Fprintln(w, string(b))
+		return err
 	}
 }
 
@@ -114,4 +121,23 @@ func promptForSelection(choices []string) (string, error) {
 		return "", err
 	}
 	return result, nil
+}
+
+func jidObject(obj *tfstate.Object) error {
+	ea := &jid.EngineAttribute{
+		DefaultQuery: ".",
+		Monochrome:   false,
+		PrettyResult: true,
+	}
+	r := bytes.NewReader(obj.Bytes())
+	e, err := jid.NewEngine(r, ea)
+	if err != nil {
+		return err
+	}
+	result := e.Run()
+	if err := result.GetError(); err != nil {
+		return err
+	}
+	fmt.Println(result.GetContent())
+	return nil
 }
