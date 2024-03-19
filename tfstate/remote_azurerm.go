@@ -1,3 +1,5 @@
+//go:build !tfstate_lookup_s3_tfe_only
+
 package tfstate
 
 import (
