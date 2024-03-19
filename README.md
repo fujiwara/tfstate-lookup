@@ -17,6 +17,7 @@ $ brew install fujiwara/tap/tfstate-lookup
 ```
 Usage of tfstate-lookup:
   -i    interactive mode
+  -j    run jid after selecting an item
   -s string
         tfstate file path or URL (default "terraform.tfstate")
   -state string
@@ -57,6 +58,37 @@ $ tfstate-lookup aws_vpc.main
 ```
 
 A remote state is supported only S3, GCS, AzureRM and Terraform Cloud / Terraform Enterprise backend currently.
+
+### Interactive mode
+
+You can use interactive mode with `-i` option.
+
+```console
+$ tfstate-lookup -i
+Search: █
+? Select an item: 
+  ▸ aws_acm_certificate.foo
+    aws_acm_certificate_validation.foo
+    aws_cloudwatch_log_group.foo
+    aws_ecs_cluster.foo
+...
+```
+
+When you select an item, it shows the attributes of the resource.
+
+### Run jid after selecting an item
+
+You can run [jid](https://github.com/simeji/jid) after selecting an item with `-j` option.
+
+jid is a JSON incremental digger.
+
+`tfstate-lookup -i -j` runs jid after selecting an item.
+
+`tfstate-lookup -j some.resource` runs jid for the attributes of the resource.
+
+tfstate-lookup integrates jid as a library, so you don't need to install jid command.
+
+See also [simiji/jid](https://github.com/simeji/jid).
 
 ## Usage (Go package)
 
