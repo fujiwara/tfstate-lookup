@@ -18,7 +18,7 @@ require (
 	github.com/hashicorp/go-tfe v1.2.0
 	github.com/itchyny/gojq v0.12.11
 	github.com/manifoldco/promptui v0.9.0
-	github.com/mattn/go-isatty v0.0.17
+	github.com/mattn/go-isatty v0.0.20
 	github.com/pkg/errors v0.9.1
 	github.com/simeji/jid v0.7.6
 	google.golang.org/api v0.155.0
