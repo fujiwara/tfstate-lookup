@@ -13,12 +13,12 @@ const (
 	defaultFuncName = "tfstate"
 )
 
-// FuncMap provides a tamplate.FuncMap tfstate based on URL and provide
+// FuncMap provides a template.FuncMap tfstate based on URL and provide
 func FuncMap(ctx context.Context, stateLoc string) (template.FuncMap, error) {
 	return FuncMapWithName(ctx, defaultFuncName, stateLoc)
 }
 
-// FuncMapWithName provides a tamplate.FuncMap. can lockup values from tfstate.
+// FuncMapWithName provides a template.FuncMap. can lockup values from tfstate.
 func FuncMapWithName(ctx context.Context, name string, stateLoc string) (template.FuncMap, error) {
 	state, err := ReadURL(ctx, stateLoc)
 	if err != nil {
