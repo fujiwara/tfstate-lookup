@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	"github.com/itchyny/gojq"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -60,7 +59,7 @@ func (a *Object) Query(query string) (*Object, error) {
 		}
 		return &Object{v}, nil
 	}
-	return nil, errors.Errorf("%s is not found in the state", query)
+	return nil, fmt.Errorf("%s is not found in the state", query)
 }
 
 // TFState represents a tfstate
@@ -128,7 +127,7 @@ func ReadWithWorkspace(ctx context.Context, src io.Reader, ws string) (*TFState,
 	}
 	var s TFState
 	if err := json.NewDecoder(src).Decode(&s.state); err != nil {
-		return nil, errors.Wrap(err, "invalid json")
+		return nil, fmt.Errorf("invalid json: %w", err)
 	}
 	if s.state.Backend != nil {
 		remote, err := readRemoteState(ctx, s.state.Backend, ws)
@@ -139,7 +138,7 @@ func ReadWithWorkspace(ctx context.Context, src io.Reader, ws string) (*TFState,
 		return Read(ctx, remote)
 	}
 	if s.state.Version != StateVersion {
-		return nil, errors.Errorf("unsupported state version %d", s.state.Version)
+		return nil, fmt.Errorf("unsupported state version %d", s.state.Version)
 	}
 	return &s, nil
 }
@@ -151,7 +150,7 @@ func ReadFile(ctx context.Context, file string) (*TFState, error) {
 
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read tfstate from %s", file)
+		return nil, fmt.Errorf("failed to read tfstate from %s: %w", file, err)
 	}
 	defer f.Close()
 	return ReadWithWorkspace(ctx, f, string(ws))
@@ -191,10 +190,10 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 	case "":
 		return ReadFile(ctx, u.Path)
 	default:
-		err = errors.Errorf("URL scheme %s is not supported", u.Scheme)
+		err = fmt.Errorf("URL scheme %s is not supported", u.Scheme)
 	}
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read tfstate from %s", u.String())
+		return nil, fmt.Errorf("failed to read tfstate from %s", u.String())
 	}
 	defer src.Close()
 	return Read(ctx, src)
@@ -207,7 +206,7 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 	var foundName string
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
-			// logest match
+			// longest match
 			if len(foundName) < len(name) {
 				found = ins
 				foundName = name
