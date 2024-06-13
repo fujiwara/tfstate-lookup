@@ -21,6 +21,8 @@ var testBuckets = []struct {
 }
 
 func TestBucketRegion(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY_ID", "DUMMY") // s3/manager.GetBucketRegion requires credentials
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "DUMMY")
 	for _, b := range testBuckets {
 		region, err := tfstate.GetBucketRegion(b.bucket)
 		if err != nil {
