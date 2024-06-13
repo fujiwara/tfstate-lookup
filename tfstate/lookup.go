@@ -207,7 +207,7 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 	var foundName string
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
-			// logest match
+			// longest match
 			if len(foundName) < len(name) {
 				found = ins
 				foundName = name
@@ -219,6 +219,9 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 	}
 
 	query := strings.TrimPrefix(key, foundName)
+	if query == "" {
+		query = "." // empty query means the whole object
+	}
 	if strings.HasPrefix(query, "[") { // e.g. output.foo[0]
 		query = "." + query
 	}

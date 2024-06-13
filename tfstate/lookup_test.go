@@ -186,14 +186,16 @@ var TestSuitesOK = []TestSuite{
 
 func testLookupState(t *testing.T, state *tfstate.TFState) {
 	for _, ts := range TestSuitesOK {
-		res, err := state.Lookup(ts.Key)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log(ts.Key, res)
-		if diff := cmp.Diff(res.Value, ts.Result); diff != "" {
-			t.Errorf("%s unexpected result %s", ts.Key, diff)
-		}
+		t.Run(ts.Key, func(t *testing.T) {
+			res, err := state.Lookup(ts.Key)
+			if err != nil {
+				t.Error(err)
+			}
+			t.Log(ts.Key, res)
+			if diff := cmp.Diff(res.Value, ts.Result); diff != "" {
+				t.Errorf("%s unexpected result %s", ts.Key, diff)
+			}
+		})
 	}
 }
 
