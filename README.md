@@ -119,7 +119,7 @@ func main() {
 - Local file `file://path/to/terraform.tfstate`
 - HTTP/HTTPS `https://example.com/terraform.tfstate`
 - Amazon S3 `s3://{bucket}/{key}`
-- Terraform Cloud `remote://api.terraform.io/{organization}/{workspaces}`
+- Terraform Cloud `remote://app.terraform.io/{organization}/{workspaces}`
   - `TFE_TOKEN` environment variable is required.
 - Google Cloud Storage `gs://{bucket}/{key}`
 - Azure Blog Storage
