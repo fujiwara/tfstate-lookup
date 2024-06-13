@@ -10,8 +10,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/go-autorest/autorest/azure/cli"
-
-	"github.com/pkg/errors"
 )
 
 type azureRMOption struct {
@@ -51,7 +49,7 @@ func readAzureRM(ctx context.Context, resourceGroupName string, accountName stri
 
 		client, err = azblob.NewClient(serviceUrl, cred, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to setup client")
+			return nil, fmt.Errorf("failed to setup client: %w", err)
 		}
 	} else {
 		// get blob access key
@@ -70,24 +68,24 @@ func readAzureRM(ctx context.Context, resourceGroupName string, accountName stri
 			}
 		}
 		if accountKey == "" {
-			return nil, errors.New("Blob access key not found in ENV, terraform config and can't be fetched from current Azure Profile")
+			return nil, fmt.Errorf("Blob access key not found in ENV, terraform config and can't be fetched from current Azure Profile")
 		}
 
 		// Authenticate
 		credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create credential")
+			return nil, fmt.Errorf("failed to create credential: %w", err)
 		}
 
 		client, err = azblob.NewClientWithSharedKeyCredential(serviceUrl, credential, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to setup client")
+			return nil, fmt.Errorf("failed to setup client: %w", err)
 		}
 	}
 
 	blobDownloadResponse, err := client.DownloadStream(ctx, containerName, key, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to download blob")
+		return nil, fmt.Errorf("failed to download blob: %w", err)
 	}
 
 	r := blobDownloadResponse.Body
@@ -102,7 +100,7 @@ func getDefaultAzureSubscription() (string, error) {
 	profilePath, _ := cli.ProfilePath()
 	profile, err := cli.LoadProfile(profilePath)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to load profile")
+		return "", fmt.Errorf("failed to load profile: %w", err)
 	}
 	subscriptionID := ""
 	for _, x := range profile.Subscriptions {
@@ -127,11 +125,11 @@ func getDefaultAzureAccessKey(ctx context.Context, resourceGroupName string, acc
 
 	clientFactory, err := armstorage.NewClientFactory(subscriptionID, cred, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create client factory")
+		return "", fmt.Errorf("failed to create client factory: %w", err)
 	}
 	keys, err := clientFactory.NewAccountsClient().ListKeys(ctx, resourceGroupName, accountName, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to list keys")
+		return "", fmt.Errorf("failed to list keys: %w", err)
 	}
 
 	return *keys.Keys[0].Value, nil
@@ -144,7 +142,7 @@ func getAzureSubscription(opt azureRMOption) (string, error) {
 
 	subscriptionID, err := getDefaultAzureSubscription()
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get default subscription")
+		return "", fmt.Errorf("failed to get default subscription: %w", err)
 	}
 
 	return subscriptionID, nil
@@ -153,7 +151,7 @@ func getAzureSubscription(opt azureRMOption) (string, error) {
 func getDefaultAzureCredential() (*azidentity.DefaultAzureCredential, error) {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to authorize")
+		return nil, fmt.Errorf("failed to authorize: %w", err)
 	}
 	return cred, nil
 }

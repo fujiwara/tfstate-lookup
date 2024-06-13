@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -22,7 +20,7 @@ func FuncMap(ctx context.Context, stateLoc string) (template.FuncMap, error) {
 func FuncMapWithName(ctx context.Context, name string, stateLoc string) (template.FuncMap, error) {
 	state, err := ReadURL(ctx, stateLoc)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateLoc)
+		return nil, fmt.Errorf("failed to read tfstate: %s: %w", stateLoc, err)
 	}
 	nameFunc := func(addrs string) string {
 		if strings.Contains(addrs, "'") {
