@@ -8,7 +8,12 @@ import (
 )
 
 func TestMustFuncMap(t *testing.T) {
-	funcMap := tfstate.MustFuncMapWithName(context.Background(), "myfunc", "./test/terraform.tfstate")
+	ctx := context.Background()
+	s, err := tfstate.ReadURL(ctx, "./test/terraform.tfstate")
+	if err != nil {
+		t.Fatal(err)
+	}
+	funcMap := s.FuncMapWithName(ctx, "myfunc")
 	fn := funcMap["myfunc"].(func(string) string)
 	if fn == nil {
 		t.Error("no function")

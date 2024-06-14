@@ -22,26 +22,7 @@ func FuncMapWithName(ctx context.Context, name string, stateLoc string) (templat
 	if err != nil {
 		return nil, fmt.Errorf("failed to read tfstate: %s: %w", stateLoc, err)
 	}
-	nameFunc := func(addrs string) string {
-		if strings.Contains(addrs, "'") {
-			addrs = strings.ReplaceAll(addrs, "'", "\"")
-		}
-		attrs, err := state.Lookup(addrs)
-		if err != nil {
-			panic(fmt.Sprintf("failed to lookup %s in tfstate: %s", addrs, err))
-		}
-		if attrs.Value == nil {
-			panic(fmt.Sprintf("%s is not found in tfstate", addrs))
-		}
-		return attrs.String()
-	}
-	return template.FuncMap{
-		name: nameFunc,
-		name + "f": func(format string, args ...interface{}) string {
-			addr := fmt.Sprintf(format, args...)
-			return nameFunc(addr)
-		},
-	}, nil
+	return state.FuncMapWithName(ctx, name), nil
 }
 
 // MustFuncMap is similar to FuncMap, but panics if it cannot get and parse tfstate.
@@ -56,4 +37,31 @@ func MustFuncMapWithName(ctx context.Context, name string, stateLoc string) temp
 		panic(err)
 	}
 	return funcMap
+}
+
+func (s *TFState) FuncMapWithName(ctx context.Context, name string) template.FuncMap {
+	nameFunc := func(addrs string) string {
+		if strings.Contains(addrs, "'") {
+			addrs = strings.ReplaceAll(addrs, "'", "\"")
+		}
+		attrs, err := s.Lookup(addrs)
+		if err != nil {
+			panic(fmt.Sprintf("failed to lookup %s in tfstate: %s", addrs, err))
+		}
+		if attrs.Value == nil {
+			panic(fmt.Sprintf("%s is not found in tfstate", addrs))
+		}
+		return attrs.String()
+	}
+	return template.FuncMap{
+		name: nameFunc,
+		name + "f": func(format string, args ...interface{}) string {
+			addr := fmt.Sprintf(format, args...)
+			return nameFunc(addr)
+		},
+	}
+}
+
+func (s *TFState) FuncMap(ctx context.Context) template.FuncMap {
+	return s.FuncMapWithName(ctx, defaultFuncName)
 }
