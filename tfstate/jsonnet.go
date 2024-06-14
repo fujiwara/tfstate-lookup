@@ -14,6 +14,16 @@ func JsonnetNativeFuncs(ctx context.Context, prefix, stateLoc string) ([]*jsonne
 	if err != nil {
 		return nil, fmt.Errorf("failed to read tfstate: %s %w", stateLoc, err)
 	}
+	return state.JsonnetNativeFuncsWithPrefix(ctx, prefix), nil
+}
+
+// TFState provides a tfstate.
+func (s *TFState) JsonnetNativeFuncs(ctx context.Context) []*jsonnet.NativeFunction {
+	return s.JsonnetNativeFuncsWithPrefix(ctx, "")
+}
+
+// JsonnetNativeFuncsWithPrefix provides the native functions for go-jsonnet with prefix.
+func (s *TFState) JsonnetNativeFuncsWithPrefix(ctx context.Context, prefix string) []*jsonnet.NativeFunction {
 	return []*jsonnet.NativeFunction{
 		{
 			Name:   prefix + "tfstate",
@@ -26,7 +36,7 @@ func JsonnetNativeFuncs(ctx context.Context, prefix, stateLoc string) ([]*jsonne
 				if !ok {
 					return nil, fmt.Errorf("tfstate expects string argument")
 				}
-				attrs, err := state.Lookup(addr)
+				attrs, err := s.Lookup(addr)
 				if err != nil {
 					return nil, fmt.Errorf("failed to lookup %s in tfstate: %w", addr, err)
 				}
@@ -36,5 +46,5 @@ func JsonnetNativeFuncs(ctx context.Context, prefix, stateLoc string) ([]*jsonne
 				return attrs.Value, nil
 			},
 		},
-	}, nil
+	}
 }
