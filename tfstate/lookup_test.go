@@ -251,3 +251,43 @@ func TestList(t *testing.T) {
 		t.Errorf("unexpected list names %s", diff)
 	}
 }
+
+func TestDump(t *testing.T) {
+	f, err := os.Open("test/terraform.tfstate")
+	if err != nil {
+		t.Error(err)
+	}
+	state, err := tfstate.Read(context.Background(), f)
+	if err != nil {
+		t.Error(err)
+	}
+	dump, _ := state.Dump()
+	if len(dump) != len(TestNames) {
+		t.Errorf("unexpected dump length %d", len(dump))
+	}
+
+	t.Run("compare dump keys with List()", func(t *testing.T) {
+		dumpKeys := make([]string, 0, len(dump))
+		for key := range dump {
+			dumpKeys = append(dumpKeys, key)
+		}
+		listKeys, _ := state.List()
+		sort.Strings(dumpKeys)
+		sort.Strings(listKeys)
+		if diff := cmp.Diff(dumpKeys, listKeys); diff != "" {
+			t.Errorf("unexpected dump keys %s", diff)
+		}
+	})
+
+	t.Run("compare dump values with Lookup()", func(t *testing.T) {
+		for key, dv := range dump {
+			lv, err := state.Lookup(key)
+			if err != nil {
+				t.Error(err)
+			}
+			if diff := cmp.Diff(dv, lv); diff != "" {
+				t.Errorf("unexpected dump value %s", diff)
+			}
+		}
+	})
+}

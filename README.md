@@ -16,12 +16,14 @@ $ brew install fujiwara/tap/tfstate-lookup
 
 ```
 Usage of tfstate-lookup:
+  -dump
+        dump all resources
   -i    interactive mode
   -j    run jid after selecting an item
   -s string
-        tfstate file path or URL (default "terraform.tfstate")
+        tfstate file path or URL (default ".terraform/terraform.tfstate")
   -state string
-        tfstate file path or URL (default "terraform.tfstate")
+        tfstate file path or URL (default ".terraform/terraform.tfstate")
   -timeout duration
         timeout for reading tfstate
 ```
@@ -89,6 +91,32 @@ jid is a JSON incremental digger.
 tfstate-lookup integrates jid as a library, so you don't need to install jid command.
 
 See also [simiji/jid](https://github.com/simeji/jid).
+
+### Dump all resources, outputs, and data sources in tfstate
+
+You can dump all resources, outputs, and data sources in tfstate with `-dump` option.
+
+```console
+$ tfstate-lookup -dump
+```
+
+The output is a JSON object. The keys are the address of the resource, output, or data source. The values are the same as the lookup result.
+
+```jsonnet
+{
+  "aws_vpc.main": {
+    "arn": "arn:aws:ec2:ap-northeast-1:123456789012:vpc/vpc-1a2b3c4d",
+    "assign_generated_ipv6_cidr_block": false,
+    // ...
+  },
+  "data.aws_ami.foo": {
+    "arn": "arn:aws:ec2:ap-northeast-1:123456789012:ami/ami-1a2b3c4d",
+    // ...
+  },
+  "output.foo": "bar",
+  // ...
+}
+```
 
 ## Usage (Go package)
 
