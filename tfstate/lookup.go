@@ -28,7 +28,11 @@ type Object struct {
 	Value interface{}
 }
 
-func (a Object) Bytes() []byte {
+func (a *Object) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.Value)
+}
+
+func (a *Object) Bytes() []byte {
 	switch v := (a.Value).(type) {
 	case string:
 		return []byte(v)
@@ -38,7 +42,7 @@ func (a Object) Bytes() []byte {
 	}
 }
 
-func (a Object) String() string {
+func (a *Object) String() string {
 	return string(a.Bytes())
 }
 
@@ -269,6 +273,16 @@ func (s *TFState) List() ([]string, error) {
 	}
 	sort.Strings(names)
 	return names, nil
+}
+
+// Dump dumps all resources, outputs, and data sources in tfstate
+func (s *TFState) Dump() (map[string]*Object, error) {
+	s.once.Do(s.scan)
+	res := make(map[string]*Object, len(s.scanned))
+	for key, ins := range s.scanned {
+		res[key] = &Object{noneNil(ins.data, ins.Attributes, ins.AttributesFlat)}
+	}
+	return res, nil
 }
 
 func (s *TFState) scan() {
