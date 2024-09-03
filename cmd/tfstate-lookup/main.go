@@ -34,6 +34,7 @@ func _main() error {
 		defaultStateFile = DefaultStateFiles[0]
 		interactive      bool
 		runJid           bool
+		dump             bool
 		timeout          time.Duration
 	)
 	for _, name := range DefaultStateFiles {
@@ -47,6 +48,7 @@ func _main() error {
 	flag.StringVar(&stateLoc, "s", defaultStateFile, "tfstate file path or URL")
 	flag.BoolVar(&interactive, "i", false, "interactive mode")
 	flag.BoolVar(&runJid, "j", false, "run jid after selecting an item")
+	flag.BoolVar(&dump, "dump", false, "dump all resources")
 	flag.DurationVar(&timeout, "timeout", 0, "timeout for reading tfstate")
 	flag.Parse()
 
@@ -65,6 +67,9 @@ func _main() error {
 	if len(flag.Args()) > 0 {
 		key = flag.Arg(0)
 	} else {
+		if dump {
+			return dumpObjects(state)
+		}
 		// list
 		names, err := state.List()
 		if err != nil {
@@ -89,6 +94,16 @@ func _main() error {
 	} else {
 		return printObject(obj)
 	}
+}
+
+func dumpObjects(state *tfstate.TFState) error {
+	res, err := state.Dump()
+	if err != nil {
+		return err
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(res)
 }
 
 func printObject(obj *tfstate.Object) error {
