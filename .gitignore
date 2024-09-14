@@ -8,6 +8,9 @@
 # Test binary, built with `go test -c`
 *.test
 
+# Binary built with `go build`
+cmd/tfstate-lookup/tfstate-lookup
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
