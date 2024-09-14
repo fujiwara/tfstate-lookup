@@ -25,6 +25,7 @@ func init() {
 var TestNames = []string{
 	`output.bar`,
 	`output.foo`,
+	`output.dash-tuple`,
 	`data.aws_caller_identity.current`,
 	`aws_acm_certificate.main`,
 	`module.logs.aws_cloudwatch_log_group.main`,
@@ -181,6 +182,10 @@ var TestSuitesOK = []TestSuite{
 	{
 		Key:    `data.terraform_remote_state.hyphenated-id.outputs.repository-uri`,
 		Result: `123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/app`,
+	},
+	{
+		Key:    `output.dash-tuple[1]`,
+		Result: float64(2),
 	},
 }
 
