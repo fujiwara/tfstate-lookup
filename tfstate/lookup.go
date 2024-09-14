@@ -244,7 +244,7 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 // quoteJQQuery does it.
 func quoteJQQuery(query string) string {
 	splitRegex := regexp.MustCompile(`[.\[\]]`)
-	digitRegex := regexp.MustCompile(`^[0-9]+$`)
+	indexRegex := regexp.MustCompile(`^-?[0-9]+$`)
 	parts := splitRegex.Split(query, -1)
 	parts_coalesced := make([]string, 0, len(parts))
 
@@ -259,7 +259,7 @@ func quoteJQQuery(query string) string {
 
 	for _, part := range parts_coalesced {
 		builder.WriteByte('[')
-		if digitRegex.MatchString(part) {
+		if indexRegex.MatchString(part) {
 			builder.WriteString(part)
 		} else {
 			if !strings.HasPrefix(part, `"`) {
@@ -274,7 +274,6 @@ func quoteJQQuery(query string) string {
 		}
 		builder.WriteByte(']')
 	}
-
 	return builder.String()
 }
 

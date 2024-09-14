@@ -187,6 +187,10 @@ var TestSuitesOK = []TestSuite{
 		Key:    `output.dash-tuple[1]`,
 		Result: float64(2),
 	},
+	{
+		Key:    `output.dash-tuple[-1]`,
+		Result: float64(1),
+	},
 }
 
 func testLookupState(t *testing.T, state *tfstate.TFState) {
