@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -242,24 +243,36 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 //
 // quoteJQQuery does it.
 func quoteJQQuery(query string) string {
-	if !strings.Contains(query, "-") {
-		return query
-	}
-	parts := strings.Split(query, ".")
-	var builder strings.Builder
+	splitRegex := regexp.MustCompile(`[.\[\]]`)
+	indexRegex := regexp.MustCompile(`^-?[0-9]+$`)
+	parts := splitRegex.Split(query, -1)
+	parts_coalesced := make([]string, 0, len(parts))
+
 	for _, part := range parts {
-		// Split(".outputs", ".") -> {"", "outputs"}
-		if part == "" {
-			continue
+		if part != "" {
+			parts_coalesced = append(parts_coalesced, part)
 		}
-		if strings.Contains(part, "-") {
-			builder.WriteString(`["`)
+	}
+
+	var builder strings.Builder
+	builder.WriteByte('.')
+
+	for _, part := range parts_coalesced {
+		builder.WriteByte('[')
+		if indexRegex.MatchString(part) {
 			builder.WriteString(part)
-			builder.WriteString(`"]`)
 		} else {
-			builder.WriteByte('.')
+			if !strings.HasPrefix(part, `"`) {
+				builder.WriteByte('"')
+			}
+
 			builder.WriteString(part)
+
+			if !strings.HasSuffix(part, `"`) {
+				builder.WriteByte('"')
+			}
 		}
+		builder.WriteByte(']')
 	}
 	return builder.String()
 }
