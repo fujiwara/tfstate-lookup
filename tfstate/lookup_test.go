@@ -229,6 +229,25 @@ func TestLookupFileURL(t *testing.T) {
 	testLookupState(t, state)
 }
 
+func BenchmarkLookupFile(b *testing.B) {
+	f, err := os.Open("test/terraform.tfstate")
+	if err != nil {
+		b.Error(err)
+	}
+	state, err := tfstate.Read(context.Background(), f)
+	if err != nil {
+		b.Error(err)
+	}
+	for i := 0; i < b.N; i++ {
+		for _, ts := range TestSuitesOK {
+			_, err := state.Lookup(ts.Key)
+			if err != nil {
+				b.Error(err)
+			}
+		}
+	}
+}
+
 func TestLookupHTTPURL(t *testing.T) {
 	h := http.FileServer(http.Dir("."))
 	ts := httptest.NewServer(h)
