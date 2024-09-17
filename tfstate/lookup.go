@@ -253,18 +253,13 @@ func quoteJQQuery(query string) string {
 		return query
 	}
 	parts := quoteSplitRegex.Split(query, -1)
-	parts_coalesced := make([]string, 0, len(parts))
-
-	for _, part := range parts {
-		if part != "" {
-			parts_coalesced = append(parts_coalesced, part)
-		}
-	}
-
 	var builder strings.Builder
+	builder.Grow(len(query) + 5*len(parts))
 	builder.WriteByte('.')
-
-	for _, part := range parts_coalesced {
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
 		builder.WriteByte('[')
 		if quoteIndexRegex.MatchString(part) {
 			builder.WriteString(part)
@@ -272,9 +267,7 @@ func quoteJQQuery(query string) string {
 			if !strings.HasPrefix(part, `"`) {
 				builder.WriteByte('"')
 			}
-
 			builder.WriteString(part)
-
 			if !strings.HasSuffix(part, `"`) {
 				builder.WriteByte('"')
 			}
