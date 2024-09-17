@@ -242,32 +242,32 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 // we must quote them like `.outputs["repository-arn"]`.
 //
 // quoteJQQuery does it.
+var (
+	quoteSplitRegex = regexp.MustCompile(`[.\[\]]`)
+	quoteIndexRegex = regexp.MustCompile(`^-?[0-9]+$`)
+)
+
 func quoteJQQuery(query string) string {
-	splitRegex := regexp.MustCompile(`[.\[\]]`)
-	indexRegex := regexp.MustCompile(`^-?[0-9]+$`)
-	parts := splitRegex.Split(query, -1)
-	parts_coalesced := make([]string, 0, len(parts))
-
-	for _, part := range parts {
-		if part != "" {
-			parts_coalesced = append(parts_coalesced, part)
-		}
+	if query == "" || !strings.Contains(query, "-") {
+		// short-circuit if query is empty or doesn't contain hyphen
+		return query
 	}
-
+	parts := quoteSplitRegex.Split(query, -1)
 	var builder strings.Builder
+	builder.Grow(len(query) + 5*len(parts))
 	builder.WriteByte('.')
-
-	for _, part := range parts_coalesced {
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
 		builder.WriteByte('[')
-		if indexRegex.MatchString(part) {
+		if quoteIndexRegex.MatchString(part) {
 			builder.WriteString(part)
 		} else {
 			if !strings.HasPrefix(part, `"`) {
 				builder.WriteByte('"')
 			}
-
 			builder.WriteString(part)
-
 			if !strings.HasSuffix(part, `"`) {
 				builder.WriteByte('"')
 			}
