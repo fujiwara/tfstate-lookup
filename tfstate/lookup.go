@@ -242,10 +242,13 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 // we must quote them like `.outputs["repository-arn"]`.
 //
 // quoteJQQuery does it.
+var (
+	quoteSplitRegex = regexp.MustCompile(`[.\[\]]`)
+	quoteIndexRegex = regexp.MustCompile(`^-?[0-9]+$`)
+)
+
 func quoteJQQuery(query string) string {
-	splitRegex := regexp.MustCompile(`[.\[\]]`)
-	indexRegex := regexp.MustCompile(`^-?[0-9]+$`)
-	parts := splitRegex.Split(query, -1)
+	parts := quoteSplitRegex.Split(query, -1)
 	parts_coalesced := make([]string, 0, len(parts))
 
 	for _, part := range parts {
@@ -259,7 +262,7 @@ func quoteJQQuery(query string) string {
 
 	for _, part := range parts_coalesced {
 		builder.WriteByte('[')
-		if indexRegex.MatchString(part) {
+		if quoteIndexRegex.MatchString(part) {
 			builder.WriteString(part)
 		} else {
 			if !strings.HasPrefix(part, `"`) {
