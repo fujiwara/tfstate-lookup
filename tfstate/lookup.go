@@ -248,6 +248,10 @@ var (
 )
 
 func quoteJQQuery(query string) string {
+	if query == "" || !strings.Contains(query, "-") {
+		// short-circuit if query is empty or doesn't contain hyphen
+		return query
+	}
 	parts := quoteSplitRegex.Split(query, -1)
 	parts_coalesced := make([]string, 0, len(parts))
 
