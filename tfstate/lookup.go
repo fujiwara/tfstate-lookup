@@ -148,17 +148,23 @@ func ReadWithWorkspace(ctx context.Context, src io.Reader, ws string) (*TFState,
 	return &s, nil
 }
 
-// ReadFile reads terraform.tfstate from the file (a workspace reads from environment file in the same directory)
+// ReadFile reads terraform.tfstate from the file
+// (Firstly, a workspace reads TF_WORKSPACE environment variable. if it doesn't exist, it reads from environment file in the same directory)
 func ReadFile(ctx context.Context, file string) (*TFState, error) {
-	ws, _ := os.ReadFile(filepath.Join(filepath.Dir(file), "environment"))
-	// if not exist, don't care (using default workspace)
+	ws := func() string {
+		if env := os.Getenv("TF_WORKSPACE"); env != "" {
+			return env
+		}
+		f, _ := os.ReadFile(filepath.Join(filepath.Dir(file), "environment"))
+		return string(f)
 
+	}()
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read tfstate from %s: %w", file, err)
 	}
 	defer f.Close()
-	return ReadWithWorkspace(ctx, f, string(ws))
+	return ReadWithWorkspace(ctx, f, ws)
 }
 
 // ReadURL reads terraform.tfstate from the URL.
