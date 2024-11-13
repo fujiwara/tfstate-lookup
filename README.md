@@ -139,8 +139,6 @@ func main() {
 }
 ```
 
-```go
-```
 
 ## Supported tfstate URL format
 
