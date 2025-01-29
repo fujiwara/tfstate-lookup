@@ -198,7 +198,7 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 		err = fmt.Errorf("URL scheme %s is not supported", u.Scheme)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to read tfstate from %s", u.String())
+		return nil, fmt.Errorf("failed to read tfstate from %s: %w", u.String(), err)
 	}
 	defer src.Close()
 	return Read(ctx, src)
