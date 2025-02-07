@@ -30,13 +30,12 @@ jobs:
 
       - name: setup minio bucket
         run: |
-          aws s3api create-bucket --bucket mybucket --create-bucket-configuration LocationConstraint=us-west-2
+          aws s3api create-bucket --bucket mybucket --endpoint-url http://127.0.0.1:9000
           aws s3 cp tfstate/test/terraform.tfstate s3://mybucket/terraform.tfstate
         env:
           AWS_ACCESS_KEY_ID: testtest     # same as MINIO_ROOT_USER
           AWS_SECRET_ACCESS_KEY: testtest # same as MINIO_ROOT_PASSWORD
           AWS_REGION: us-west-2           # same as MINIO_REGION
-          AWS_ENDPOINT_URL_S3: http://127.0.0.1:9000
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Build & Test
