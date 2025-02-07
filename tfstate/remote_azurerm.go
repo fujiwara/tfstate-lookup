@@ -25,7 +25,7 @@ func readAzureRMState(ctx context.Context, config map[string]interface{}, ws str
 		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
 			key = key + *prefix + ws
 		} else {
-			key = key + defaultWorkspeceKeyPrefix + ws
+			key = key + defaultWorkspaceKeyPrefix + ws
 		}
 	}
 	opt := azureRMOption{

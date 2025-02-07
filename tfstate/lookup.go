@@ -22,7 +22,7 @@ const (
 
 var (
 	defaultWorkspace          = "default"
-	defaultWorkspeceKeyPrefix = "env:"
+	defaultWorkspaceKeyPrefix = "env:"
 )
 
 type Object struct {

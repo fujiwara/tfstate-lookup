@@ -32,7 +32,7 @@ func readS3State(ctx context.Context, config map[string]interface{}, ws string) 
 		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
 			key = path.Join(*prefix, ws, key)
 		} else {
-			key = path.Join(defaultWorkspeceKeyPrefix, ws, key)
+			key = path.Join(defaultWorkspaceKeyPrefix, ws, key)
 		}
 	}
 	opt := S3Option{
