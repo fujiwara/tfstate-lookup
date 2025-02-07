@@ -174,7 +174,9 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 		src, err = readHTTP(ctx, u.String())
 	case "s3":
 		key := strings.TrimPrefix(u.Path, "/")
-		src, err = readS3(ctx, u.Host, key, s3Option{})
+		src, err = readS3(ctx, u.Host, key, S3Option{
+			Endpoint: os.Getenv(S3EndpointEnvKey),
+		})
 	case "gs":
 		key := strings.TrimPrefix(u.Path, "/")
 		src, err = readGCS(ctx, u.Host, key, "", os.Getenv("GOOGLE_ENCRYPTION_KEY"))

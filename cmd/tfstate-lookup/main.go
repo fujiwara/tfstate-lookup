@@ -36,6 +36,7 @@ func _main() error {
 		runJid           bool
 		dump             bool
 		timeout          time.Duration
+		s3EndpointURL    string
 	)
 	for _, name := range DefaultStateFiles {
 		if _, err := os.Stat(name); err == nil {
@@ -49,8 +50,13 @@ func _main() error {
 	flag.BoolVar(&interactive, "i", false, "interactive mode")
 	flag.BoolVar(&runJid, "j", false, "run jid after selecting an item")
 	flag.BoolVar(&dump, "dump", false, "dump all resources")
+	flag.StringVar(&s3EndpointURL, "s3-endpoint-url", "", "S3 endpoint URL")
 	flag.DurationVar(&timeout, "timeout", 0, "timeout for reading tfstate")
 	flag.Parse()
+
+	if s3EndpointURL != "" {
+		os.Setenv(tfstate.S3EndpointEnvKey, s3EndpointURL)
+	}
 
 	var ctx = context.Background()
 	var cancel context.CancelFunc
