@@ -166,6 +166,10 @@ $ AWS_ENDPOINT_URL_S3=http://localhost:9000 tfstate-lookup s3://mybucket/terrafo
 
 This option is useful for S3 compatible storage services.
 
+### Terraform Workspace support
+
+You can specify the Terraform workspace with `TF_WORKSPACE` environment variable.
+
 ## LICENSE
 
 [Mozilla Public License Version 2.0](LICENSE)
