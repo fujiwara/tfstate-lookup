@@ -5,10 +5,19 @@ jobs:
     strategy:
       matrix:
         go:
-          - "1.21"
           - "1.22"
+          - "1.23"
     name: Build
     runs-on: ubuntu-latest
+    services:
+      minio:
+        image: quay.io/minio/minio
+        options: -p 9000:9000
+        ports:
+          - 9000:9000
+        env:
+          MINIO_ACCESS_KEY: testtest
+          MINIO_SECRET_KEY: testtest
     steps:
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -22,3 +31,7 @@ jobs:
       - name: Build & Test
         run: |
           go test -race -v ./...
+        env:
+          TEST_AWS_ENDPOINT_S3: http://127.0.0.1:9000
+          AWS_ACCESS_KEY_ID: testtest     # same as MINIO_ACCESS_KEY
+          AWS_SECRET_ACCESS_KEY: testtest # same as MINIO_SECRET_KEY
