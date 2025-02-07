@@ -17,6 +17,7 @@ jobs:
         env:
           MINIO_ACCESS_KEY: testtest
           MINIO_SECRET_KEY: testtest
+          MINIO_REGION: us-west-2
     steps:
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -34,3 +35,4 @@ jobs:
           TEST_AWS_ENDPOINT_URL_S3: http://127.0.0.1:9000
           AWS_ACCESS_KEY_ID: testtest     # same as MINIO_ACCESS_KEY
           AWS_SECRET_ACCESS_KEY: testtest # same as MINIO_SECRET_KEY
+          AWS_REGION: us-west-2           # same as MINIO_REGION
