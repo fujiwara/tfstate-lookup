@@ -1,6 +1,8 @@
 package tfstate_test
 
 import (
+	"context"
+	"os"
 	"testing"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
@@ -31,5 +33,20 @@ func TestBucketRegion(t *testing.T) {
 		if b.region != region {
 			t.Errorf("unexpected region of %s. expected %s, got %s", b.bucket, b.region, region)
 		}
+	}
+}
+
+func TestReadS3(t *testing.T) {
+	envKey := "TEST_" + tfstate.S3EndpointEnvKey
+	endpoint := os.Getenv(envKey)
+	if endpoint == "" {
+		t.Skipf("%s is not set", envKey)
+	}
+	t.Setenv(tfstate.S3EndpointEnvKey, endpoint)
+
+	ctx := context.TODO() // use t.Context() in Go 1.24
+	_, err := tfstate.ReadURL(ctx, "s3://mybucket/terraform.tfstate")
+	if err != nil {
+		t.Error("failed to read s3", err)
 	}
 }
