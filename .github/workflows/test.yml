@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       minio:
-        image: quay.io/minio/minio
+        image: minio/minio
         ports:
           - 9000:9000
         options: server /tmp
