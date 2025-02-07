@@ -31,6 +31,6 @@ jobs:
         run: |
           go test -race -v ./...
         env:
-          TEST_AWS_ENDPOINT_S3: http://127.0.0.1:9000
+          TEST_AWS_ENDPOINT_URL_S3: http://127.0.0.1:9000
           AWS_ACCESS_KEY_ID: testtest     # same as MINIO_ACCESS_KEY
           AWS_SECRET_ACCESS_KEY: testtest # same as MINIO_SECRET_KEY
