@@ -21,9 +21,11 @@ Usage of tfstate-lookup:
   -i    interactive mode
   -j    run jid after selecting an item
   -s string
-        tfstate file path or URL (default ".terraform/terraform.tfstate")
+        tfstate file path or URL (default "terraform.tfstate")
+  -s3-endpoint-url string
+        S3 endpoint URL
   -state string
-        tfstate file path or URL (default ".terraform/terraform.tfstate")
+        tfstate file path or URL (default "terraform.tfstate")
   -timeout duration
         timeout for reading tfstate
 ```
@@ -151,6 +153,18 @@ func main() {
 - Azure Blog Storage
   - `azurerm://{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}`
   - `azurerm://{subscription_id}@{resource_group_name}/{storage_account_name}/{container_name}/{blob_name}`
+
+### S3 endpoint URL support
+
+You can specify the S3 endpoint URL with `-s3-endpoint-url` option. `AWS_ENDPOINT_URL_S3` environment variable is also supported.
+
+```console
+$ tfstate-lookup -s3-endpoint-url http://localhost:9000 s3://mybucket/terraform.tfstate
+
+$ AWS_ENDPOINT_URL_S3=http://localhost:9000 tfstate-lookup s3://mybucket/terraform.tfstate
+```
+
+This option is useful for S3 compatible storage services.
 
 ## LICENSE
 
