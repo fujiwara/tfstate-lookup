@@ -28,6 +28,17 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
 
+      - name: setup minio bucket
+        run: |
+          aws s3api create-bucket --bucket mybucket
+          aws s3 cp tfstate/test/terraform.tfstate s3://mybucket/terraform.tfstate
+        env:
+          AWS_ACCESS_KEY_ID: testtest     # same as MINIO_ACCESS_KEY
+          AWS_SECRET_ACCESS_KEY: testtest # same as MINIO_SECRET_KEY
+          AWS_REGION: us-west-2           # same as MINIO_REGION
+          AWS_ENDPOINT_URL_S3: http://127.0.0.1:9000
+          AWS_EC2_METADATA_DISABLED: true
+
       - name: Build & Test
         run: |
           go test -race -v ./...
