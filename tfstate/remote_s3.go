@@ -52,7 +52,7 @@ func readS3State(ctx context.Context, config map[string]interface{}, ws string) 
 	return readS3(ctx, bucket, key, opt)
 }
 
-func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadCloser, error) {
+func newAWSConfig(ctx context.Context, opt S3Option, bucket string) (*aws.Config, error) {
 	var staticProvider aws.CredentialsProvider
 	if opt.AccessKey != "" && opt.SecretKey != "" {
 		staticProvider = credentials.NewStaticCredentialsProvider(opt.AccessKey, opt.SecretKey, "")
@@ -63,7 +63,7 @@ func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadClose
 		config.WithCredentialsProvider(staticProvider),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
+		return nil, err
 	}
 	region, err := getBucketRegion(ctx, cfg, bucket)
 	if err != nil {
@@ -86,13 +86,21 @@ func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadClose
 		creds := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(cfg), arn.String())
 		cfg.Credentials = creds
 	}
+	return &cfg, nil
+}
+
+func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadCloser, error) {
+	cfg, err := newAWSConfig(ctx, opt, bucket)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load aws config: %w", err)
+	}
 	s3Opts := []func(*s3.Options){}
 	if u := opt.Endpoint; u != "" {
 		s3Opts = append(s3Opts, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String(u)
 		})
 	}
-	svc := s3.NewFromConfig(cfg, s3Opts...)
+	svc := s3.NewFromConfig(*cfg, s3Opts...)
 	result, err := svc.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
