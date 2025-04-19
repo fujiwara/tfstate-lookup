@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.6.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.5.0...v1.6.0) - 2025-04-19
+- Bump golang.org/x/crypto from 0.31.0 to 0.35.0 by @dependabot in https://github.com/fujiwara/tfstate-lookup/pull/235
+- Bump golang.org/x/net from 0.33.0 to 0.38.0 by @dependabot in https://github.com/fujiwara/tfstate-lookup/pull/236
+- Bump github.com/golang-jwt/jwt/v4 from 4.5.1 to 4.5.2 by @dependabot in https://github.com/fujiwara/tfstate-lookup/pull/233
+- Bump github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 by @dependabot in https://github.com/fujiwara/tfstate-lookup/pull/232
+- Bump the aws-sdk-go-v2 group across 1 directory with 6 updates by @dependabot in https://github.com/fujiwara/tfstate-lookup/pull/238
+
 ## [v1.5.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.4.3...v1.5.0) - 2025-02-07
 - Supports S3 endpoint by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/223
 - use tagpr by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/224
