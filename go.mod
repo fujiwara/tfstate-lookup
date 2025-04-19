@@ -1,6 +1,8 @@
 module github.com/fujiwara/tfstate-lookup
 
-go 1.18
+go 1.23.0
+
+toolchain go1.24.2
 
 require (
 	cloud.google.com/go/storage v1.36.0
