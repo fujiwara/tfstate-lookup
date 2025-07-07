@@ -63,6 +63,52 @@ $ tfstate-lookup aws_vpc.main
 
 A remote state is supported only S3, GCS, AzureRM and Terraform Cloud / Terraform Enterprise backend currently.
 
+### Parent key access for indexed resources
+
+You can access parent keys of resources defined with `count` or `for_each` to get all instances at once.
+
+#### Count resources (array)
+
+```console
+$ tfstate-lookup aws_instance.web
+[
+  {
+    "id": "i-1234567890abcdef0",
+    "instance_type": "t3.micro",
+    ...
+  },
+  {
+    "id": "i-0987654321fedcba0", 
+    "instance_type": "t3.micro",
+    ...
+  }
+]
+
+$ tfstate-lookup aws_instance.web[0].id
+i-1234567890abcdef0
+```
+
+#### For_each resources (map)
+
+```console
+$ tfstate-lookup aws_s3_bucket.example
+{
+  "staging": {
+    "id": "my-bucket-staging",
+    "bucket": "my-bucket-staging",
+    ...
+  },
+  "production": {
+    "id": "my-bucket-production",
+    "bucket": "my-bucket-production", 
+    ...
+  }
+}
+
+$ tfstate-lookup 'aws_s3_bucket.example["staging"].id'
+my-bucket-staging
+```
+
 ### Interactive mode
 
 You can use interactive mode with `-i` option.
