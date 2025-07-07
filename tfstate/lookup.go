@@ -70,7 +70,7 @@ func (a *Object) Query(query string) (*Object, error) {
 // TFState represents a tfstate
 type TFState struct {
 	state   tfstate
-	scanned map[string]instance
+	scanned map[string]interface{}
 	once    sync.Once
 }
 
@@ -215,7 +215,7 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
 	s.once.Do(s.scan)
-	var found instance
+	var found interface{}
 	var foundName string
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
@@ -238,7 +238,7 @@ func (s *TFState) Lookup(key string) (*Object, error) {
 		query = "." + query
 	}
 	if strings.HasPrefix(query, ".") || query == "" {
-		attr := &Object{noneNil(found.data, found.Attributes, found.AttributesFlat)}
+		attr := &Object{found}
 		return attr.Query(quoteJQQuery(query))
 	}
 
@@ -301,15 +301,15 @@ func (s *TFState) Dump() (map[string]*Object, error) {
 	s.once.Do(s.scan)
 	res := make(map[string]*Object, len(s.scanned))
 	for key, ins := range s.scanned {
-		res[key] = &Object{noneNil(ins.data, ins.Attributes, ins.AttributesFlat)}
+		res[key] = &Object{ins}
 	}
 	return res, nil
 }
 
 func (s *TFState) scan() {
-	s.scanned = make(map[string]instance, len(s.state.Resources))
+	s.scanned = make(map[string]interface{}, len(s.state.Resources))
 	for key, value := range s.state.Outputs {
-		s.scanned["output."+key] = instance{data: outputValue(value)}
+		s.scanned["output."+key] = outputValue(value)
 	}
 	for _, r := range s.state.Resources {
 		var module string
@@ -329,7 +329,7 @@ func (s *TFState) scan() {
 						data[k] = outputValue(v)
 					}
 					key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
-					s.scanned[key] = instance{data: data}
+					s.scanned[key] = data
 				}
 			} else {
 				for _, i := range r.Instances {
@@ -340,7 +340,7 @@ func (s *TFState) scan() {
 					} else {
 						key = module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))
 					}
-					s.scanned[key] = ins
+					s.scanned[key] = noneNil(ins.data, ins.Attributes, ins.AttributesFlat)
 				}
 			}
 		}
