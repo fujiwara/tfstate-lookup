@@ -72,6 +72,7 @@ func (a *Object) Query(query string) (*Object, error) {
 type TFState struct {
 	state   tfstate
 	scanned map[string]interface{}
+	groups  map[string]interface{} // Parent keys for indexed resources (count/for_each)
 	once    sync.Once
 }
 
@@ -216,6 +217,18 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
 	s.once.Do(s.scan)
+	
+	// First, check for exact match in individual instances
+	if found, ok := s.scanned[key]; ok {
+		return &Object{found}, nil
+	}
+	
+	// Then, check for exact match in groups (parent keys)
+	if found, ok := s.groups[key]; ok {
+		return &Object{found}, nil
+	}
+	
+	// Finally, look for longest prefix match in individual instances
 	var found interface{}
 	var foundName string
 	for name, ins := range s.scanned {
@@ -309,6 +322,7 @@ func (s *TFState) Dump() (map[string]*Object, error) {
 
 func (s *TFState) scan() {
 	s.scanned = make(map[string]interface{}, len(s.state.Resources))
+	s.groups = make(map[string]interface{})
 	s.scanOutputs()
 	s.scanResources()
 }
@@ -408,11 +422,11 @@ func (s *TFState) scanRegularResource(r resource, module, prefix string) {
 		}
 	}
 
-	// Add parent key
+	// Add parent key to groups map (separate from individual instances)
 	if arrayResources != nil {
-		s.scanned[baseKey] = arrayResources
+		s.groups[baseKey] = arrayResources
 	} else if groupedResources != nil {
-		s.scanned[baseKey] = groupedResources
+		s.groups[baseKey] = groupedResources
 	}
 }
 
