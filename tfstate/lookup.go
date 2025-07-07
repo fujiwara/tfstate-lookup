@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -308,42 +309,110 @@ func (s *TFState) Dump() (map[string]*Object, error) {
 
 func (s *TFState) scan() {
 	s.scanned = make(map[string]interface{}, len(s.state.Resources))
+	s.scanOutputs()
+	s.scanResources()
+}
+
+func (s *TFState) scanOutputs() {
 	for key, value := range s.state.Outputs {
 		s.scanned["output."+key] = outputValue(value)
 	}
+}
+
+func (s *TFState) scanResources() {
 	for _, r := range s.state.Resources {
-		var module string
+		if r.Mode != "data" && r.Mode != "managed" {
+			continue
+		}
+
+		// Build module prefix
+		module := ""
 		if r.Module != "" {
 			module = r.Module + "."
 		}
-		switch r.Mode {
-		case "data", "managed":
-			prefix := ""
-			if r.Mode == "data" {
-				prefix = "data."
-			}
-			if r.Mode == "data" && r.Type == "terraform_remote_state" {
-				if a, ok := r.Instances[0].Attributes.(map[string]interface{}); ok {
-					data := make(map[string]interface{}, len(a))
-					for k, v := range a {
-						data[k] = outputValue(v)
-					}
-					key := module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
-					s.scanned[key] = data
-				}
-			} else {
-				for _, i := range r.Instances {
-					ins := i
-					var key string
-					if len(ins.IndexKey) == 0 {
-						key = module + fmt.Sprintf("%s%s.%s", prefix, r.Type, r.Name)
-					} else {
-						key = module + fmt.Sprintf("%s%s.%s[%s]", prefix, r.Type, r.Name, string(i.IndexKey))
-					}
-					s.scanned[key] = noneNil(ins.data, ins.Attributes, ins.AttributesFlat)
-				}
-			}
+
+		// Build mode prefix (data resources get "data." prefix)
+		prefix := ""
+		if r.Mode == "data" {
+			prefix = "data."
 		}
+
+		// Special handling for terraform_remote_state data sources
+		if r.Mode == "data" && r.Type == "terraform_remote_state" {
+			s.scanRemoteStateResource(r, module, prefix)
+		} else {
+			s.scanRegularResource(r, module, prefix)
+		}
+	}
+}
+
+func (s *TFState) scanRemoteStateResource(r resource, module, prefix string) {
+	if len(r.Instances) == 0 {
+		return
+	}
+
+	if a, ok := r.Instances[0].Attributes.(map[string]interface{}); ok {
+		data := make(map[string]interface{}, len(a))
+		for k, v := range a {
+			data[k] = outputValue(v)
+		}
+		key := module + prefix + r.Type + "." + r.Name
+		s.scanned[key] = data
+	}
+}
+
+func (s *TFState) scanRegularResource(r resource, module, prefix string) {
+	// Handle empty instances
+	if len(r.Instances) == 0 {
+		return
+	}
+
+	baseKey := module + prefix + r.Type + "." + r.Name
+
+	// Handle single instance resource (most common case)
+	if len(r.Instances) == 1 && len(r.Instances[0].IndexKey) == 0 {
+		instanceData := noneNil(r.Instances[0].data, r.Instances[0].Attributes, r.Instances[0].AttributesFlat)
+		s.scanned[baseKey] = instanceData
+		return
+	}
+
+	// Lazy initialization - determine type from first instance
+	var groupedResources map[string]interface{}
+	var arrayResources []interface{}
+
+	// Process all instances
+	for _, inst := range r.Instances {
+		instanceData := noneNil(inst.data, inst.Attributes, inst.AttributesFlat)
+		iStr := string(inst.IndexKey)
+		key := baseKey + "[" + iStr + "]"
+		s.scanned[key] = instanceData
+
+		if strings.HasPrefix(iStr, "\"") && strings.HasSuffix(iStr, "\"") {
+			// String index - for_each resource
+			index := iStr[1 : len(iStr)-1]
+			if groupedResources == nil {
+				groupedResources = make(map[string]interface{}, len(r.Instances))
+			}
+			groupedResources[index] = instanceData
+		} else if index, err := strconv.Atoi(iStr); err == nil {
+			// Numeric index - count resource
+			if arrayResources == nil {
+				arrayResources = make([]interface{}, 0, len(r.Instances))
+			}
+			if index >= len(arrayResources) {
+				for len(arrayResources) <= index {
+					arrayResources = append(arrayResources, nil)
+				}
+			}
+			arrayResources[index] = instanceData
+		}
+	}
+
+	// Add parent key
+	if arrayResources != nil {
+		s.scanned[baseKey] = arrayResources
+	} else if groupedResources != nil {
+		s.scanned[baseKey] = groupedResources
 	}
 }
 
