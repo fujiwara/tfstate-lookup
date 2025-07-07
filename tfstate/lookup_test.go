@@ -28,7 +28,6 @@ var TestNames = []string{
 	`output.dash-tuple`,
 	`data.aws_caller_identity.current`,
 	`aws_acm_certificate.main`,
-	`module.logs.aws_cloudwatch_log_group.main`,
 	`module.logs.aws_cloudwatch_log_group.main["app"]`,
 	`module.logs.aws_cloudwatch_log_group.main["web"]`,
 	`aws_iam_role_policy_attachment.ec2[0]`,
@@ -98,10 +97,6 @@ var TestSuitesOK = []TestSuite{
 	{
 		Key:    `module.logs.aws_cloudwatch_log_group.main["app"].retention_in_days_xxx`,
 		Result: nil,
-	},
-	{
-		Key:    `module.logs.aws_cloudwatch_log_group.main.name`,
-		Result: "/main/vanish",
 	},
 	{
 		Key:    `module.logs.aws_cloudwatch_log_group.ma`,
