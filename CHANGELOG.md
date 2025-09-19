@@ -1,5 +1,8 @@
 # Changelog
 
+## [v1.7.1](https://github.com/fujiwara/tfstate-lookup/compare/v1.7.0...v1.7.1) - 2025-09-19
+- Immutable release by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/263
+
 ## [v1.7.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.6.0...v1.7.0) - 2025-07-22
 - Add parent key support for indexed resources (count/for_each) by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/252
 - Bump github.com/hashicorp/go-tfe from 1.56.0 to 1.84.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/250
