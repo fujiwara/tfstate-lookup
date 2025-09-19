@@ -17,6 +17,8 @@ builds:
 archives:
 checksum:
   name_template: "checksums.txt"
+release:
+  use_existing_draft: true
 snapshot:
   version_template: "{{ .Tag }}-next"
 changelog:
