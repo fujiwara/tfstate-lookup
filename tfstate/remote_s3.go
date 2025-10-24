@@ -90,6 +90,7 @@ func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadClose
 	if u := opt.Endpoint; u != "" {
 		s3Opts = append(s3Opts, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String(u)
+			o.UsePathStyle = true // for localstack, minio, etc compatible services
 		})
 	}
 	svc := s3.NewFromConfig(cfg, s3Opts...)
