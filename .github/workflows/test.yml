@@ -5,47 +5,49 @@ jobs:
     strategy:
       matrix:
         go:
-          - "1.23"
           - "1.24"
+          - "1.25"
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: setup minio
+      - name: setup versitygw
         run: |
-          wget -q https://dl.min.io/server/minio/release/linux-amd64/minio
-          sudo install minio /usr/local/bin/
+          cd /tmp
+          wget -q https://github.com/versity/versitygw/releases/download/v1.0.18/versitygw_v1.0.18_Linux_x86_64.tar.gz
+          tar xzf versitygw_v1.0.18_Linux_x86_64.tar.gz
+          mv versitygw_v1.0.18_Linux_x86_64/versitygw .
           mkdir -p /tmp/data
-          minio server /tmp/data &
+          ./versitygw --port :9000 posix /tmp/data &
         env:
-          MINIO_ROOT_USER: testtest
-          MINIO_ROOT_PASSWORD: testtest
-          MINIO_REGION: us-west-2
+          ROOT_ACCESS_KEY: testuser
+          ROOT_SECRET_KEY: testpass
+          VGW_REGION: us-west-2
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
         with:
           go-version: ${{ matrix.go }}
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
-      - name: setup minio bucket
+      - name: setup local s3 bucket
         run: |
           aws s3api create-bucket --bucket mybucket
           aws s3 cp tfstate/test/terraform.tfstate s3://mybucket/terraform.tfstate
         env:
-          AWS_ACCESS_KEY_ID: testtest     # same as MINIO_ROOT_USER
-          AWS_SECRET_ACCESS_KEY: testtest # same as MINIO_ROOT_PASSWORD
-          AWS_REGION: us-west-2           # same as MINIO_REGION
+          AWS_ACCESS_KEY_ID: testuser # same as ROOT_ACCESS_KEY
+          AWS_SECRET_ACCESS_KEY: testpass # same as ROOT_SECRET_KEY
+          AWS_REGION: us-west-2 # same as VGW_REGION
           AWS_EC2_METADATA_DISABLED: true
-          AWS_ENDPOINT_URL_S3: http://127.0.0.1:9000
+          AWS_ENDPOINT_URL_S3: http://localhost:9000
 
       - name: Build & Test
         run: |
           go test -race -v ./...
         env:
-          TEST_AWS_ENDPOINT_URL_S3: http://127.0.0.1:9000
-          AWS_ACCESS_KEY_ID: testtest     # same as MINIO_ROOT_USER
-          AWS_SECRET_ACCESS_KEY: testtest # same as MINIO_ROOT_PASSWORD
-          AWS_REGION: us-west-2           # same as MINIO_REGION
+          TEST_AWS_ENDPOINT_URL_S3: http://localhost:9000
+          AWS_ACCESS_KEY_ID: testuser # same as ROOT_ACCESS_KEY
+          AWS_SECRET_ACCESS_KEY: testpass # same as ROOT_SECRET_KEY
+          AWS_REGION: us-west-2 # same as VGW_REGION

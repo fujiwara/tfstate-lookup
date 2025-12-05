@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.8.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.7.1...v1.8.0) - 2025-11-21
+- Ensure UsePathStyle=true if s3 endpoint is set. by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/268
+- Bump Songmu/tagpr from 1.8.4 to 1.9.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/267
+- supports `aws login` - update to aws-sdk-go-v2 v1.40.0 by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/271
+- Bump golang.org/x/crypto from 0.39.0 to 0.45.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/270
+
+## [v1.7.1](https://github.com/fujiwara/tfstate-lookup/compare/v1.7.0...v1.7.1) - 2025-09-19
+- Immutable release by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/263
+
+## [v1.7.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.6.0...v1.7.0) - 2025-07-22
+- Add parent key support for indexed resources (count/for_each) by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/252
+- Bump github.com/hashicorp/go-tfe from 1.56.0 to 1.84.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/250
+- Bump github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage from 1.3.0 to 1.8.1 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/249
+- Bump golang.org/x/oauth2 from 0.16.0 to 0.27.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/255
+
 ## [v1.6.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.5.0...v1.6.0) - 2025-04-19
 - Bump golang.org/x/crypto from 0.31.0 to 0.35.0 by @dependabot in https://github.com/fujiwara/tfstate-lookup/pull/235
 - Bump golang.org/x/net from 0.33.0 to 0.38.0 by @dependabot in https://github.com/fujiwara/tfstate-lookup/pull/236
