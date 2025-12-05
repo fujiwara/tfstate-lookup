@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-tfe"
-	"github.com/hashicorp/terraform-svchost"
+	svchost "github.com/hashicorp/terraform-svchost"
 	"github.com/hashicorp/terraform-svchost/disco"
 )
 
@@ -56,12 +56,19 @@ func readTFE(ctx context.Context, hostname string, organization string, ws strin
 	}
 
 	serviceDiscovery := disco.New()
-	service, err := serviceDiscovery.DiscoverServiceURL(host, tfeServiceID)
-	// Return the error, unless its a disco.ErrVersionNotSupported error.
-	if _, ok := err.(*disco.ErrVersionNotSupported); !ok && err != nil {
-		return nil, err
+	var service *url.URL
+	fn := func() error {
+		var err error
+		service, err = serviceDiscovery.DiscoverServiceURL(host, tfeServiceID)
+		// Return the error, unless its a disco.ErrVersionNotSupported error.
+		if _, ok := err.(*disco.ErrVersionNotSupported); !ok && err != nil {
+			return err
+		}
+		return nil
 	}
-
+	if err := hideStderr(fn); err != nil {
+		return nil, fmt.Errorf("failed to discover TFE service URL for host %q: %w", host, err)
+	}
 	client, err := tfe.NewClient(&tfe.Config{
 		Address:  service.String(),
 		BasePath: service.Path,
