@@ -105,5 +105,8 @@ func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadClose
 }
 
 func getBucketRegion(ctx context.Context, cfg aws.Config, bucket string) (string, error) {
+	if cfg.Region == "" {
+		cfg.Region = "us-east-1" // default region for S3
+	}
 	return manager.GetBucketRegion(ctx, s3.NewFromConfig(cfg), bucket)
 }

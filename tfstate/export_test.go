@@ -6,9 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-func GetBucketRegion(bucket string) (string, error) {
-	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("us-east-1"))
+func GetBucketRegion(ctx context.Context, bucket, configRegion string) (string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(configRegion))
 	if err != nil {
 		return "", err
 	}
