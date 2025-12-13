@@ -9,8 +9,9 @@ import (
 )
 
 var testBuckets = []struct {
-	bucket string
-	region string
+	bucket       string
+	region       string
+	configRegion string
 }{
 	{
 		bucket: "tfstate-lookup",
@@ -20,19 +21,32 @@ var testBuckets = []struct {
 		bucket: "tfstate-lookup-oregon",
 		region: "us-west-2",
 	},
+	{
+		bucket:       "tfstate-lookup",
+		region:       "us-east-1",
+		configRegion: "us-east-1",
+	},
+	{
+		bucket:       "tfstate-lookup-oregon",
+		region:       "us-west-2",
+		configRegion: "ap-northeast-1",
+	},
 }
 
 func TestBucketRegion(t *testing.T) {
 	t.Setenv("AWS_ACCESS_KEY_ID", "DUMMY") // s3/manager.GetBucketRegion requires credentials
 	t.Setenv("AWS_SECRET_ACCESS_KEY", "DUMMY")
+	ctx := t.Context()
 	for _, b := range testBuckets {
-		region, err := tfstate.GetBucketRegion(b.bucket)
-		if err != nil {
-			t.Error(err)
-		}
-		if b.region != region {
-			t.Errorf("unexpected region of %s. expected %s, got %s", b.bucket, b.region, region)
-		}
+		t.Run(b.bucket+"-"+b.configRegion, func(t *testing.T) {
+			region, err := tfstate.GetBucketRegion(ctx, b.bucket, b.configRegion)
+			if err != nil {
+				t.Error(err)
+			}
+			if b.region != region {
+				t.Errorf("unexpected region of %s. expected %s, got %s", b.bucket, b.region, region)
+			}
+		})
 	}
 }
 
