@@ -1,5 +1,8 @@
 # Changelog
 
+## [v1.8.1](https://github.com/fujiwara/tfstate-lookup/compare/v1.8.0...v1.8.1) - 2025-12-13
+- set default region(us-east-1) for getBucketRegion by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/276
+
 ## [v1.8.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.7.1...v1.8.0) - 2025-11-21
 - Ensure UsePathStyle=true if s3 endpoint is set. by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/268
 - Bump Songmu/tagpr from 1.8.4 to 1.9.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/267
