@@ -10,13 +10,13 @@ import (
 	tfe "github.com/hashicorp/go-tfe"
 )
 
-func readTFEState(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
+func readTFEState(ctx context.Context, config map[string]any, ws string) (io.ReadCloser, error) {
 	hostname, organization, token := *strpe(config["hostname"]), *strp(config["organization"]), *strpe(config["token"])
 	if token == "" {
 		token = os.Getenv("TFE_TOKEN")
 	}
 
-	workspaces, ok := config["workspaces"].(map[string]interface{})
+	workspaces, ok := config["workspaces"].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("failed to parse workspaces")
 	}

@@ -55,7 +55,7 @@ func (s *TFState) FuncMapWithName(ctx context.Context, name string) template.Fun
 	}
 	return template.FuncMap{
 		name: nameFunc,
-		name + "f": func(format string, args ...interface{}) string {
+		name + "f": func(format string, args ...any) string {
 			addr := fmt.Sprintf(format, args...)
 			return nameFunc(addr)
 		},

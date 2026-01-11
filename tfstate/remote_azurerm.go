@@ -18,7 +18,7 @@ type azureRMOption struct {
 	subscriptionID string
 }
 
-func readAzureRMState(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
+func readAzureRMState(ctx context.Context, config map[string]any, ws string) (io.ReadCloser, error) {
 	accountName, containerName, key := *strp(config["storage_account_name"]), *strpe(config["container_name"]), *strpe(config["key"])
 	resourceGroupName := *strp(config["resource_group_name"])
 	if ws != defaultWorkspace {

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func readGCSState(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
+func readGCSState(ctx context.Context, config map[string]any, ws string) (io.ReadCloser, error) {
 	bucket := *strp(config["bucket"])
 	prefix := *strpe(config["prefix"])
 	credentials := *strpe(config["credentials"])
