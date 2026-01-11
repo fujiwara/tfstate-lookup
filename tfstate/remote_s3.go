@@ -26,7 +26,7 @@ type S3Option struct {
 	Endpoint  string
 }
 
-func readS3State(ctx context.Context, config map[string]interface{}, ws string) (io.ReadCloser, error) {
+func readS3State(ctx context.Context, config map[string]any, ws string) (io.ReadCloser, error) {
 	bucket, key := *strpe(config["bucket"]), *strpe(config["key"])
 	if ws != defaultWorkspace {
 		if prefix := strp(config["workspace_key_prefix"]); prefix != nil {
@@ -43,7 +43,7 @@ func readS3State(ctx context.Context, config map[string]interface{}, ws string) 
 	}
 
 	if config["endpoints"] != nil {
-		if es, ok := config["endpoints"].(map[string]interface{}); ok {
+		if es, ok := config["endpoints"].(map[string]any); ok {
 			if es["s3"] != nil {
 				opt.Endpoint = es["s3"].(string)
 			}

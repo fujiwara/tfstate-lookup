@@ -28,7 +28,7 @@ func (s *TFState) JsonnetNativeFuncsWithPrefix(ctx context.Context, prefix strin
 		{
 			Name:   prefix + "tfstate",
 			Params: []ast.Identifier{"address"},
-			Func: func(args []interface{}) (interface{}, error) {
+			Func: func(args []any) (any, error) {
 				if len(args) != 1 {
 					return nil, fmt.Errorf("tfstate expects 1 argument")
 				}

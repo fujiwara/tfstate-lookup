@@ -15,7 +15,7 @@ import (
 
 type TestSuite struct {
 	Key    string
-	Result interface{}
+	Result any
 }
 
 func init() {
@@ -68,7 +68,7 @@ var TestSuitesOK = []TestSuite{
 	},
 	{
 		Key:    "aws_acm_certificate.main.subject_alternative_names",
-		Result: []interface{}{string("*.example.com")},
+		Result: []any{string("*.example.com")},
 	},
 	{
 		Key:    "aws_acm_certificate.main.subject_alternative_names[0]",
@@ -233,7 +233,7 @@ func BenchmarkLookupFile(b *testing.B) {
 	if err != nil {
 		b.Error(err)
 	}
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		for _, ts := range TestSuitesOK {
 			_, err := state.Lookup(ts.Key)
 			if err != nil {

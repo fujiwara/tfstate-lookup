@@ -27,7 +27,7 @@ var (
 )
 
 type Object struct {
-	Value interface{}
+	Value any
 }
 
 func (a *Object) MarshalJSON() ([]byte, error) {
@@ -71,23 +71,23 @@ func (a *Object) Query(query string) (*Object, error) {
 // TFState represents a tfstate
 type TFState struct {
 	state   tfstate
-	scanned map[string]interface{}
-	groups  map[string]interface{} // Parent keys for indexed resources (count/for_each)
+	scanned map[string]any
+	groups  map[string]any // Parent keys for indexed resources (count/for_each)
 	once    sync.Once
 }
 
 type tfstate struct {
-	Resources        []resource             `json:"resources"`
-	Outputs          map[string]interface{} `json:"outputs"`
-	Backend          *backend               `json:"backend"`
-	Version          int                    `json:"version"`
-	TerraformVersion string                 `json:"terraform_version"`
-	Serial           int                    `json:"serial"`
-	Lineage          string                 `json:"lineage"`
+	Resources        []resource     `json:"resources"`
+	Outputs          map[string]any `json:"outputs"`
+	Backend          *backend       `json:"backend"`
+	Version          int            `json:"version"`
+	TerraformVersion string         `json:"terraform_version"`
+	Serial           int            `json:"serial"`
+	Lineage          string         `json:"lineage"`
 }
 
-func outputValue(v interface{}) interface{} {
-	if mv, ok := v.(map[string]interface{}); ok {
+func outputValue(v any) any {
+	if mv, ok := v.(map[string]any); ok {
 		if mv["value"] != nil && mv["type"] != nil {
 			return mv["value"]
 		}
@@ -97,7 +97,7 @@ func outputValue(v interface{}) interface{} {
 
 type backend struct {
 	Type   string `json:"type"`
-	Config map[string]interface{}
+	Config map[string]any
 }
 
 type resource struct {
@@ -115,11 +115,11 @@ type instances []instance
 type instance struct {
 	IndexKey       json.RawMessage `json:"index_key"`
 	SchemaVersion  int             `json:"schema_version"`
-	Attributes     interface{}     `json:"attributes"`
-	AttributesFlat interface{}     `json:"attributes_flat"`
+	Attributes     any             `json:"attributes"`
+	AttributesFlat any             `json:"attributes_flat"`
 	Private        string          `json:"private"`
 
-	data interface{}
+	data any
 }
 
 // Read reads a tfstate from io.Reader
@@ -217,19 +217,19 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
 	s.once.Do(s.scan)
-	
+
 	// First, check for exact match in individual instances
 	if found, ok := s.scanned[key]; ok {
 		return &Object{found}, nil
 	}
-	
+
 	// Then, check for exact match in groups (parent keys)
 	if found, ok := s.groups[key]; ok {
 		return &Object{found}, nil
 	}
-	
+
 	// Finally, look for longest prefix match in individual instances
-	var found interface{}
+	var found any
 	var foundName string
 	for name, ins := range s.scanned {
 		if strings.HasPrefix(key, name) {
@@ -321,8 +321,8 @@ func (s *TFState) Dump() (map[string]*Object, error) {
 }
 
 func (s *TFState) scan() {
-	s.scanned = make(map[string]interface{}, len(s.state.Resources))
-	s.groups = make(map[string]interface{})
+	s.scanned = make(map[string]any, len(s.state.Resources))
+	s.groups = make(map[string]any)
 	s.scanOutputs()
 	s.scanResources()
 }
@@ -365,8 +365,8 @@ func (s *TFState) scanRemoteStateResource(r resource, module, prefix string) {
 		return
 	}
 
-	if a, ok := r.Instances[0].Attributes.(map[string]interface{}); ok {
-		data := make(map[string]interface{}, len(a))
+	if a, ok := r.Instances[0].Attributes.(map[string]any); ok {
+		data := make(map[string]any, len(a))
 		for k, v := range a {
 			data[k] = outputValue(v)
 		}
@@ -391,8 +391,8 @@ func (s *TFState) scanRegularResource(r resource, module, prefix string) {
 	}
 
 	// Lazy initialization - determine type from first instance
-	var groupedResources map[string]interface{}
-	var arrayResources []interface{}
+	var groupedResources map[string]any
+	var arrayResources []any
 
 	// Process all instances
 	for _, inst := range r.Instances {
@@ -405,13 +405,13 @@ func (s *TFState) scanRegularResource(r resource, module, prefix string) {
 			// String index - for_each resource
 			index := iStr[1 : len(iStr)-1]
 			if groupedResources == nil {
-				groupedResources = make(map[string]interface{}, len(r.Instances))
+				groupedResources = make(map[string]any, len(r.Instances))
 			}
 			groupedResources[index] = instanceData
 		} else if index, err := strconv.Atoi(iStr); err == nil {
 			// Numeric index - count resource
 			if arrayResources == nil {
-				arrayResources = make([]interface{}, 0, len(r.Instances))
+				arrayResources = make([]any, 0, len(r.Instances))
 			}
 			if index >= len(arrayResources) {
 				for len(arrayResources) <= index {
@@ -430,7 +430,7 @@ func (s *TFState) scanRegularResource(r resource, module, prefix string) {
 	}
 }
 
-func noneNil(args ...interface{}) interface{} {
+func noneNil(args ...any) any {
 	for _, v := range args {
 		if v != nil {
 			return v

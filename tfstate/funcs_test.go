@@ -35,7 +35,7 @@ func TestMustFuncMap(t *testing.T) {
 
 func TestMustFuncMapF(t *testing.T) {
 	funcMap := tfstate.MustFuncMapWithName(context.Background(), "myfunc", "./test/terraform.tfstate")
-	fn := funcMap["myfuncf"].(func(string, ...interface{}) string)
+	fn := funcMap["myfuncf"].(func(string, ...any) string)
 	if fn == nil {
 		t.Error("no function")
 	}

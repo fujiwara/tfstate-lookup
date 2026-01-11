@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func strp(v interface{}) *string {
+func strp(v any) *string {
 	if v == nil {
 		return nil
 	}
@@ -16,7 +16,7 @@ func strp(v interface{}) *string {
 	return nil
 }
 
-func strpe(v interface{}) *string {
+func strpe(v any) *string {
 	empty := ""
 	if v == nil {
 		return &empty
