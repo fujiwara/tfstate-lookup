@@ -169,8 +169,33 @@ func ReadFile(ctx context.Context, file string) (*TFState, error) {
 	return ReadWithWorkspace(ctx, f, ws)
 }
 
+// readURLConfig holds internal configuration for ReadURL
+type readURLConfig struct {
+	s3Endpoint string
+}
+
+func newReadURLConfig() *readURLConfig {
+	return &readURLConfig{
+		s3Endpoint: os.Getenv(S3EndpointEnvKey),
+	}
+}
+
+// ReadURLOption is an interface for options passed to ReadURL
+type ReadURLOption interface {
+	applyReadURLConfig(*readURLConfig)
+}
+
+// S3EndpointOption specifies the S3 endpoint URL
+type S3EndpointOption string
+
+func (o S3EndpointOption) applyReadURLConfig(c *readURLConfig) {
+	if o != "" {
+		c.s3Endpoint = string(o)
+	}
+}
+
 // ReadURL reads terraform.tfstate from the URL.
-func ReadURL(ctx context.Context, loc string) (*TFState, error) {
+func ReadURL(ctx context.Context, loc string, opts ...ReadURLOption) (*TFState, error) {
 	u, err := url.Parse(loc)
 	if err != nil {
 		return nil, err
@@ -181,10 +206,12 @@ func ReadURL(ctx context.Context, loc string) (*TFState, error) {
 	case "http", "https":
 		src, err = readHTTP(ctx, u.String())
 	case "s3":
+		cfg := newReadURLConfig()
+		for _, opt := range opts {
+			opt.applyReadURLConfig(cfg)
+		}
 		key := strings.TrimPrefix(u.Path, "/")
-		src, err = readS3(ctx, u.Host, key, S3Option{
-			Endpoint: os.Getenv(S3EndpointEnvKey),
-		})
+		src, err = readS3(ctx, u.Host, key, S3Option{Endpoint: cfg.s3Endpoint})
 	case "gs":
 		key := strings.TrimPrefix(u.Path, "/")
 		src, err = readGCS(ctx, u.Host, key, "", os.Getenv("GOOGLE_ENCRYPTION_KEY"))

@@ -36,7 +36,6 @@ func _main() error {
 		runJid           bool
 		dump             bool
 		timeout          time.Duration
-		s3EndpointURL    string
 	)
 	for _, name := range DefaultStateFiles {
 		if _, err := os.Stat(name); err == nil {
@@ -45,6 +44,7 @@ func _main() error {
 		}
 	}
 
+	var s3EndpointURL string
 	flag.StringVar(&stateLoc, "state", defaultStateFile, "tfstate file path or URL")
 	flag.StringVar(&stateLoc, "s", defaultStateFile, "tfstate file path or URL")
 	flag.BoolVar(&interactive, "i", false, "interactive mode")
@@ -54,10 +54,6 @@ func _main() error {
 	flag.DurationVar(&timeout, "timeout", 0, "timeout for reading tfstate")
 	flag.Parse()
 
-	if s3EndpointURL != "" {
-		os.Setenv(tfstate.S3EndpointEnvKey, s3EndpointURL)
-	}
-
 	var ctx = context.Background()
 	var cancel context.CancelFunc
 	if timeout > 0 {
@@ -65,7 +61,11 @@ func _main() error {
 		defer cancel()
 	}
 
-	state, err := tfstate.ReadURL(ctx, stateLoc)
+	var opts []tfstate.ReadURLOption
+	if s3EndpointURL != "" {
+		opts = append(opts, tfstate.S3EndpointOption(s3EndpointURL))
+	}
+	state, err := tfstate.ReadURL(ctx, stateLoc, opts...)
 	if err != nil {
 		return err
 	}
