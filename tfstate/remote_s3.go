@@ -70,17 +70,22 @@ func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadClose
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
-	region, err := getBucketRegion(ctx, cfg, bucket)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get bucket region: %w", err)
-	}
-	if region != opt.Region {
-		// reload config with bucket region
-		cfg, err = config.LoadDefaultConfig(ctx,
-			config.WithRegion(region),
-		)
+
+	// Skip getBucketRegion when using custom endpoint (e.g., MinIO, LocalStack)
+	// as these services don't support the HeadBucket region detection
+	if opt.Endpoint == "" {
+		region, err := getBucketRegion(ctx, cfg, bucket)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get bucket region: %w", err)
+		}
+		if region != opt.Region {
+			// reload config with bucket region
+			cfg, err = config.LoadDefaultConfig(ctx,
+				config.WithRegion(region),
+			)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	if opt.RoleArn != "" {
