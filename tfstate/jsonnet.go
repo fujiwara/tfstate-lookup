@@ -9,8 +9,8 @@ import (
 )
 
 // JsonnetNativeFuncs provides the native functions for go-jsonnet.
-func JsonnetNativeFuncs(ctx context.Context, prefix, stateLoc string) ([]*jsonnet.NativeFunction, error) {
-	state, err := ReadURL(ctx, stateLoc)
+func JsonnetNativeFuncs(ctx context.Context, prefix, stateLoc string, opts ...ReadURLOption) ([]*jsonnet.NativeFunction, error) {
+	state, err := ReadURL(ctx, stateLoc, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read tfstate: %s %w", stateLoc, err)
 	}
