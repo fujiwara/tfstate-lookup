@@ -212,6 +212,33 @@ $ AWS_ENDPOINT_URL_S3=http://localhost:9000 tfstate-lookup s3://mybucket/terrafo
 
 This option is useful for S3 compatible storage services.
 
+### Google Cloud Storage authentication
+
+tfstate-lookup uses [Application Default Credentials (ADC)](https://cloud.google.com/docs/authentication/application-default-credentials) for GCS authentication.
+
+```console
+$ gcloud auth application-default login
+$ tfstate-lookup -s gs://your-bucket/terraform.tfstate
+```
+
+> **Note**: `gcloud auth login` is not sufficient. You must use `gcloud auth application-default login` for Go client libraries.
+
+See [examples/gcs](examples/gcs) for more details.
+
+### Azure Blob Storage authentication
+
+tfstate-lookup uses [DefaultAzureCredential](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#DefaultAzureCredential) for Azure authentication.
+
+```console
+$ az login --scope https://management.core.windows.net//.default
+$ export ARM_USE_AZUREAD=true
+$ tfstate-lookup -s azurerm://resource-group/storage-account/container/terraform.tfstate
+```
+
+> **Note**: If MFA is enabled, you must use `az login --scope https://management.core.windows.net//.default`.
+
+See [examples/azure](examples/azure) for more details.
+
 ### Terraform Workspace support
 
 You can specify the Terraform workspace with `TF_WORKSPACE` environment variable.
