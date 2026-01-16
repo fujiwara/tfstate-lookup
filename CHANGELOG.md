@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.9.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.8.1...v1.9.0) - 2026-01-16
+- Go modernize by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/281
+- Add ReadURLOption interface for S3 endpoint configuration by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/283
+- Add ReadURLOption to public functions by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/284
+- Bump actions/setup-go from 6.0.0 to 6.1.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/272
+- Bump Songmu/tagpr from 1.9.0 to 1.10.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/279
+- Bump actions/checkout from 5.0.0 to 6.0.1 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/278
+- Add cloud storage authentication documentation by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/285
+- bump modules by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/286
+- Skip getBucketRegion when using custom S3 endpoint by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/288
+- Bump aws-sdk-go-v2 to latest by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/289
+
 ## [v1.8.1](https://github.com/fujiwara/tfstate-lookup/compare/v1.8.0...v1.8.1) - 2025-12-13
 - set default region(us-east-1) for getBucketRegion by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/276
 
