@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -26,6 +27,12 @@ type S3Option struct {
 	Endpoint  string
 }
 
+func newS3Option() *S3Option {
+	return &S3Option{
+		Endpoint: os.Getenv(S3EndpointEnvKey), // default from env var
+	}
+}
+
 func readS3State(ctx context.Context, config map[string]any, ws string) (io.ReadCloser, error) {
 	bucket, key := *strpe(config["bucket"]), *strpe(config["key"])
 	if ws != defaultWorkspace {
@@ -35,13 +42,11 @@ func readS3State(ctx context.Context, config map[string]any, ws string) (io.Read
 			key = path.Join(defaultWorkspaceKeyPrefix, ws, key)
 		}
 	}
-	opt := S3Option{
-		Region:    *strpe(config["region"]),
-		RoleArn:   *strpe(config["role_arn"]),
-		AccessKey: *strpe(config["access_key"]),
-		SecretKey: *strpe(config["secret_key"]),
-	}
-
+	opt := newS3Option()
+	opt.Region = *strpe(config["region"])
+	opt.RoleArn = *strpe(config["role_arn"])
+	opt.AccessKey = *strpe(config["access_key"])
+	opt.SecretKey = *strpe(config["secret_key"])
 	if config["endpoints"] != nil {
 		if es, ok := config["endpoints"].(map[string]any); ok {
 			if es["s3"] != nil {
@@ -49,7 +54,7 @@ func readS3State(ctx context.Context, config map[string]any, ws string) (io.Read
 			}
 		}
 	}
-	return readS3(ctx, bucket, key, opt)
+	return readS3(ctx, bucket, key, *opt)
 }
 
 func readS3(ctx context.Context, bucket, key string, opt S3Option) (io.ReadCloser, error) {

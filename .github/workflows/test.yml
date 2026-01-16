@@ -47,7 +47,7 @@ jobs:
         run: |
           go test -race -v ./...
         env:
-          TEST_AWS_ENDPOINT_URL_S3: http://localhost:9000
+          AWS_ENDPOINT_URL_S3: http://localhost:9000
           AWS_ACCESS_KEY_ID: testuser # same as ROOT_ACCESS_KEY
           AWS_SECRET_ACCESS_KEY: testpass # same as ROOT_SECRET_KEY
           AWS_REGION: us-west-2 # same as VGW_REGION

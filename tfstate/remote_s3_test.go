@@ -1,7 +1,6 @@
 package tfstate_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -36,6 +35,7 @@ var testBuckets = []struct {
 func TestBucketRegion(t *testing.T) {
 	t.Setenv("AWS_ACCESS_KEY_ID", "DUMMY") // s3/manager.GetBucketRegion requires credentials
 	t.Setenv("AWS_SECRET_ACCESS_KEY", "DUMMY")
+	t.Setenv(tfstate.S3EndpointEnvKey, "") // use real AWS, not local S3
 	ctx := t.Context()
 	for _, b := range testBuckets {
 		t.Run(b.bucket+"-"+b.configRegion, func(t *testing.T) {
@@ -51,16 +51,26 @@ func TestBucketRegion(t *testing.T) {
 }
 
 func TestReadS3(t *testing.T) {
-	envKey := "TEST_" + tfstate.S3EndpointEnvKey
-	endpoint := os.Getenv(envKey)
+	endpoint := os.Getenv(tfstate.S3EndpointEnvKey)
 	if endpoint == "" {
-		t.Skipf("%s is not set", envKey)
+		t.Skipf("%s is not set", tfstate.S3EndpointEnvKey)
 	}
-	t.Setenv(tfstate.S3EndpointEnvKey, endpoint)
 
-	ctx := context.TODO() // use t.Context() in Go 1.24
-	_, err := tfstate.ReadURL(ctx, "s3://mybucket/terraform.tfstate")
-	if err != nil {
-		t.Error("failed to read s3", err)
-	}
+	t.Run("with env var (default)", func(t *testing.T) {
+		// endpoint is already set in env, just use default behavior
+		_, err := tfstate.ReadURL(t.Context(), "s3://mybucket/terraform.tfstate")
+		if err != nil {
+			t.Error("failed to read s3", err)
+		}
+	})
+
+	t.Run("with S3EndpointOption", func(t *testing.T) {
+		// hide env var and use option instead
+		t.Setenv(tfstate.S3EndpointEnvKey, "")
+		_, err := tfstate.ReadURL(t.Context(), "s3://mybucket/terraform.tfstate",
+			tfstate.S3EndpointOption(endpoint))
+		if err != nil {
+			t.Error("failed to read s3", err)
+		}
+	})
 }
