@@ -1,5 +1,8 @@
 # Changelog
 
+## [v1.10.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.9.0...v1.10.0) - 2026-01-23
+- Add build tags for selective backend builds by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/290
+
 ## [v1.9.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.8.1...v1.9.0) - 2026-01-16
 - Go modernize by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/281
 - Add ReadURLOption interface for S3 endpoint configuration by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/283
