@@ -188,6 +188,27 @@ func main() {
 ```
 
 
+### Selective backend build
+
+When using tfstate-lookup as a library, you can reduce the binary size by excluding unused backends with build tags.
+
+Available build tags:
+- `no_s3` - Exclude AWS S3 backend
+- `no_gcs` - Exclude Google Cloud Storage backend
+- `no_azurerm` - Exclude Azure Blob Storage backend
+- `no_tfe` - Exclude Terraform Cloud/Enterprise backend
+
+```console
+$ go build -tags no_gcs,no_azurerm,no_tfe ./...
+```
+
+Binary size comparison (example):
+| Build | Size |
+|-------|------|
+| All backends | 61MB |
+| S3 only (`-tags no_gcs,no_azurerm,no_tfe`) | 26MB |
+| No cloud backends (`-tags no_s3,no_gcs,no_azurerm,no_tfe`) | 15MB |
+
 ## Supported tfstate URL format
 
 - Local file `file://path/to/terraform.tfstate`
