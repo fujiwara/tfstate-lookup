@@ -2,6 +2,17 @@
 
 ## [v1.11.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.10.0...v1.11.0) - 2026-03-19
 - Bump google.golang.org/grpc from 1.76.0 to 1.79.3 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/305
+- Bump go.opentelemetry.io/otel/sdk from 1.38.0 to 1.40.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/304
+- Bump actions/setup-go from 6.1.0 to 6.3.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/301
+- Bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/302
+- Bump actions/checkout from 6.0.1 to 6.0.2 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/292
+- Bump Songmu/tagpr from 1.10.0 to 1.17.1 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/300
+- Bump the aws-sdk-go-v2 group across 1 directory with 6 updates by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/303
+- Bump cloud.google.com/go/storage from 1.59.1 to 1.59.2 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/298
+- Bump github.com/hashicorp/go-tfe from 1.84.0 to 1.99.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/297
+
+## [v1.11.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.10.0...v1.11.0) - 2026-03-19
+- Bump google.golang.org/grpc from 1.76.0 to 1.79.3 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/305
 
 ## [v1.10.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.9.0...v1.10.0) - 2026-01-23
 - Add build tags for selective backend builds by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/290
