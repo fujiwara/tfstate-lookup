@@ -1,5 +1,8 @@
 # Changelog
 
+## [v1.11.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.10.0...v1.11.0) - 2026-03-19
+- Bump google.golang.org/grpc from 1.76.0 to 1.79.3 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/305
+
 ## [v1.10.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.9.0...v1.10.0) - 2026-01-23
 - Add build tags for selective backend builds by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/290
 
