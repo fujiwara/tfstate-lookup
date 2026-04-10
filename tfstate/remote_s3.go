@@ -14,9 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/smithy-go/middleware"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 const S3EndpointEnvKey = "AWS_ENDPOINT_URL_S3"
@@ -120,5 +121,32 @@ func getBucketRegion(ctx context.Context, cfg aws.Config, bucket string) (string
 	if cfg.Region == "" {
 		cfg.Region = "us-east-1" // default region for S3
 	}
-	return manager.GetBucketRegion(ctx, s3.NewFromConfig(cfg), bucket)
+	var region string
+	captureBucketRegion := func(stack *middleware.Stack) error {
+		return stack.Deserialize.Add(middleware.DeserializeMiddlewareFunc(
+			"CaptureBucketRegion",
+			func(ctx context.Context, in middleware.DeserializeInput, next middleware.DeserializeHandler) (middleware.DeserializeOutput, middleware.Metadata, error) {
+				out, metadata, err := next.HandleDeserialize(ctx, in)
+				if resp, ok := out.RawResponse.(*smithyhttp.Response); ok {
+					region = resp.Header.Get("X-Amz-Bucket-Region")
+				}
+				return out, metadata, err
+			},
+		), middleware.After)
+	}
+	// Use anonymous credentials to avoid 403 for private buckets
+	_, err := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.Credentials = nil
+	}).HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucket),
+	}, func(o *s3.Options) {
+		o.APIOptions = append(o.APIOptions, captureBucketRegion)
+	})
+	if region != "" {
+		return region, nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return cfg.Region, nil
 }
