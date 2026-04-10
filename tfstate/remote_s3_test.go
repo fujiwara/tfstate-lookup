@@ -33,8 +33,6 @@ var testBuckets = []struct {
 }
 
 func TestBucketRegion(t *testing.T) {
-	t.Setenv("AWS_ACCESS_KEY_ID", "DUMMY") // s3/manager.GetBucketRegion requires credentials
-	t.Setenv("AWS_SECRET_ACCESS_KEY", "DUMMY")
 	t.Setenv(tfstate.S3EndpointEnvKey, "") // use real AWS, not local S3
 	ctx := t.Context()
 	for _, b := range testBuckets {
