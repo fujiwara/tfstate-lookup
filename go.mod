@@ -16,7 +16,7 @@ require (
 	github.com/aws/smithy-go v1.24.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-jsonnet v0.22.0
-	github.com/hashicorp/go-tfe v1.99.0
+	github.com/hashicorp/go-tfe v1.103.0
 	github.com/itchyny/gojq v0.12.19
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.20
