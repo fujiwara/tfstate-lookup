@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -74,6 +75,13 @@ type TFState struct {
 	scanned map[string]any
 	groups  map[string]any // Parent keys for indexed resources (count/for_each)
 	once    sync.Once
+
+	// overrides holds external values that Lookup consults before
+	// falling through to the underlying state. Populated via
+	// SetOverrides. Protected by overridesMu because SetOverrides may
+	// be called after construction while Lookup is running.
+	overridesMu sync.RWMutex
+	overrides   map[string]any
 }
 
 type tfstate struct {
@@ -120,6 +128,18 @@ type instance struct {
 	Private        string          `json:"private"`
 
 	data any
+}
+
+// Empty returns a TFState with no underlying tfstate source. Useful when
+// the caller wants to populate the state entirely via SetOverrides — e.g.
+// an orchestrator that already has all relevant resource values in hand
+// and does not want a tfstate file as a source.
+//
+// A TFState returned by Empty satisfies the same interface as one
+// returned by Read / ReadFile / ReadURL; Lookup, FuncMap, Dump, and List
+// all work and simply return empty/miss until SetOverrides is called.
+func Empty() *TFState {
+	return &TFState{state: tfstate{Version: StateVersion}}
 }
 
 // Read reads a tfstate from io.Reader
@@ -241,30 +261,68 @@ func ReadURL(ctx context.Context, loc string, opts ...ReadURLOption) (*TFState, 
 	return Read(ctx, src)
 }
 
+// SetOverrides replaces this state's override map. Each key is a
+// resource-level address (`aws_foo.bar`, `output.foo`,
+// `module.m.aws_foo.bar[0]`) — i.e. an address at the same granularity
+// as the entries the scanner produces from a real tfstate file. The
+// value is the resource's full attributes (typically map[string]any),
+// or for outputs the output value itself.
+//
+// Lookup consults overrides at both the exact-match and longest-prefix
+// stages: a request for `aws_foo.bar.value` finds the `aws_foo.bar`
+// override and navigates `.value` via the same jq path the underlying
+// state uses. Overrides win over the underlying state on both kinds of
+// match.
+//
+// Pass nil or an empty map to clear. SetOverrides is safe to call
+// concurrently with Lookup.
+func (s *TFState) SetOverrides(overrides map[string]any) {
+	s.overridesMu.Lock()
+	defer s.overridesMu.Unlock()
+	if len(overrides) == 0 {
+		s.overrides = nil
+		return
+	}
+	cp := make(map[string]any, len(overrides))
+	maps.Copy(cp, overrides)
+	s.overrides = cp
+}
+
 // Lookup lookups attributes of the specified key in tfstate
 func (s *TFState) Lookup(key string) (*Object, error) {
 	s.once.Do(s.scan)
 
-	// First, check for exact match in individual instances
+	s.overridesMu.RLock()
+	defer s.overridesMu.RUnlock()
+
+	// Exact match. Overrides win over the underlying state.
+	if found, ok := s.overrides[key]; ok {
+		return &Object{found}, nil
+	}
 	if found, ok := s.scanned[key]; ok {
 		return &Object{found}, nil
 	}
-
-	// Then, check for exact match in groups (parent keys)
 	if found, ok := s.groups[key]; ok {
 		return &Object{found}, nil
 	}
 
-	// Finally, look for longest prefix match in individual instances
+	// Longest prefix match across overrides + scanned. Overrides are
+	// iterated first so they win on a length tie; otherwise the longer
+	// of the two prefixes wins. Non-boundary prefixes (e.g. "publican"
+	// against "public") are filtered out below by the suffix-prefix
+	// check, which only accepts `.` or `[` as separators.
 	var found any
 	var foundName string
+	for name, ins := range s.overrides {
+		if strings.HasPrefix(key, name) && len(name) > len(foundName) {
+			found = ins
+			foundName = name
+		}
+	}
 	for name, ins := range s.scanned {
-		if strings.HasPrefix(key, name) {
-			// longest match
-			if len(foundName) < len(name) {
-				found = ins
-				foundName = name
-			}
+		if strings.HasPrefix(key, name) && len(name) > len(foundName) {
+			found = ins
+			foundName = name
 		}
 	}
 	if foundName == "" {
