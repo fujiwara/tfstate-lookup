@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v5
         with:
           ref: ${{ inputs.tag || github.ref }}
-      - uses: Songmu/tagpr@9d0f650553240dab1fa907eca27e3fd5b586e538 # v1.18.1
+      - uses: Songmu/tagpr@9bbb945b2fb025126186661e27d55485e3fc6df6 # v1.18.3
         id: tagpr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
           go-version: "1.26"
         if: ${{ steps.tagpr.outputs.tag != '' || github.event_name == 'workflow_dispatch' }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
+        uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8 # v7.2.1
         with:
           version: '~> v2'
           args: release
