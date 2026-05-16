@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.12.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.11.0...v1.12.0) - 2026-05-16
+- Add SetOverrides + Empty for caller-supplied state values by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/327
+- Bump dependencies by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/329
+
 ## [v1.11.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.10.0...v1.11.0) - 2026-04-10
 - Bump google.golang.org/grpc from 1.76.0 to 1.79.3 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/305
 - Bump go.opentelemetry.io/otel/sdk from 1.38.0 to 1.40.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/304
