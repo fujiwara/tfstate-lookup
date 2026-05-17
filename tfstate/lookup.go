@@ -261,6 +261,30 @@ func ReadURL(ctx context.Context, loc string, opts ...ReadURLOption) (*TFState, 
 	return Read(ctx, src)
 }
 
+// DiscardScannedState drops anything that has already been scanned
+// from the underlying tfstate (path / url / io.Reader) and prevents
+// any future lazy scan from populating it. After this call, Lookup
+// resolves keys from the override map only: a key that is absent
+// from overrides surfaces as a miss, the same as on a freshly
+// Empty() state.
+//
+// This is the right knob for callers that supply every relevant
+// value through SetOverrides — e.g. a Terraform provider wrapping
+// ecspresso — and want missing overrides to fail fast instead of
+// being silently filled in from a possibly-stale tfstate file.
+//
+// One-shot operation: the scanned data is freed and cannot be
+// brought back without re-Read'ing the state.
+func (s *TFState) DiscardScannedState() {
+	s.overridesMu.Lock()
+	defer s.overridesMu.Unlock()
+	// Mark the lazy scanner as already-run so Lookup's s.once.Do(s.scan)
+	// becomes a no-op, then drop any data a prior Lookup already loaded.
+	s.once.Do(func() {})
+	s.scanned = nil
+	s.groups = nil
+}
+
 // SetOverrides replaces this state's override map. Each key is a
 // resource-level address (`aws_foo.bar`, `output.foo`,
 // `module.m.aws_foo.bar[0]`) — i.e. an address at the same granularity
