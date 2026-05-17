@@ -1,5 +1,8 @@
 # Changelog
 
+## [v1.12.1](https://github.com/fujiwara/tfstate-lookup/compare/v1.12.0...v1.12.1) - 2026-05-17
+- Add DiscardScannedState to drop the underlying tfstate by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/330
+
 ## [v1.12.0](https://github.com/fujiwara/tfstate-lookup/compare/v1.11.0...v1.12.0) - 2026-05-16
 - Add SetOverrides + Empty for caller-supplied state values by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/327
 - Bump dependencies by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/329
