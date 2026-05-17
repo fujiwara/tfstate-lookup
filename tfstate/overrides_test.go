@@ -151,3 +151,79 @@ func TestOverridesExactBeatsPrefix(t *testing.T) {
 		t.Errorf("exact match did not win: %#v", obj)
 	}
 }
+
+// TestDiscardScannedState verifies that DiscardScannedState drops the
+// underlying tfstate so Lookup serves keys from overrides only.
+func TestDiscardScannedState(t *testing.T) {
+	ctx := context.Background()
+	f, err := os.Open("test/terraform.tfstate")
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer f.Close()
+	s, err := tfstate.Read(ctx, f)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+
+	// Sanity: output.bar exists in the fixture before discarding.
+	before, err := s.Lookup("output.bar")
+	if err != nil {
+		t.Fatalf("Lookup before: %v", err)
+	}
+	if before == nil || before.Value == nil {
+		t.Fatal("expected output.bar to be present in fixture")
+	}
+
+	s.SetOverrides(map[string]any{
+		"output.bar": "OVERRIDDEN",
+	})
+	s.DiscardScannedState()
+
+	// Overridden key still resolves to the override value.
+	got, err := s.Lookup("output.bar")
+	if err != nil {
+		t.Fatalf("Lookup override: %v", err)
+	}
+	if got.Value != "OVERRIDDEN" {
+		t.Errorf("Lookup(output.bar) = %#v, want OVERRIDDEN", got.Value)
+	}
+
+	// A different key that does exist in the fixture must no longer
+	// resolve, since the scanned state has been discarded.
+	miss, err := s.Lookup("output.foo")
+	if err != nil {
+		t.Fatalf("Lookup miss: %v", err)
+	}
+	if miss != nil && miss.Value != nil {
+		t.Errorf("after DiscardScannedState, %s still resolved from scanned state: %#v",
+			"output.foo", miss.Value)
+	}
+}
+
+// TestDiscardScannedStateBeforeLookup confirms that calling
+// DiscardScannedState before any Lookup also disables the lazy scan,
+// so a key that would otherwise have been populated by it misses.
+func TestDiscardScannedStateBeforeLookup(t *testing.T) {
+	ctx := context.Background()
+	f, err := os.Open("test/terraform.tfstate")
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer f.Close()
+	s, err := tfstate.Read(ctx, f)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+
+	s.DiscardScannedState()
+
+	obj, err := s.Lookup("output.foo")
+	if err != nil {
+		t.Fatalf("Lookup: %v", err)
+	}
+	if obj != nil && obj.Value != nil {
+		t.Errorf("after DiscardScannedState, %s still resolved: %#v",
+			"output.foo", obj.Value)
+	}
+}
