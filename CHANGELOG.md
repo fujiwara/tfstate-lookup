@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.12.2](https://github.com/fujiwara/tfstate-lookup/compare/v1.12.1...v1.12.2) - 2026-07-11
+- Bump golang.org/x/net from 0.53.0 to 0.55.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/343
+- Bump golang.org/x/crypto from 0.51.0 to 0.52.0 by @dependabot[bot] in https://github.com/fujiwara/tfstate-lookup/pull/345
+
 ## [v1.12.1](https://github.com/fujiwara/tfstate-lookup/compare/v1.12.0...v1.12.1) - 2026-05-17
 - Add DiscardScannedState to drop the underlying tfstate by @fujiwara in https://github.com/fujiwara/tfstate-lookup/pull/330
 
