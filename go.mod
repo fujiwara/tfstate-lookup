@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.16
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.100.1
 	github.com/aws/aws-sdk-go-v2/service/sts v1.42.1
-	github.com/aws/smithy-go v1.25.1
+	github.com/aws/smithy-go v1.27.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-jsonnet v0.22.0
 	github.com/hashicorp/go-tfe v1.103.0
